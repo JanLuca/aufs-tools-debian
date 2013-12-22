@@ -1,0 +1,33 @@
+Source: aufs-tools
+Section: kernel
+Priority: optional
+Maintainer: Filesystems Group <filesystems-devel@lists.alioth.debian.org>
+Uploaders: Luk Claes <luk@debian.org>
+Build-Depends: debhelper (>= 9), linux-libc-dev
+Standards-Version: 3.9.4
+Homepage: http://aufs.sourceforge.net/
+
+Package: aufs-tools
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Tools to manage aufs filesystems
+ The aufs driver provides a unification file system for the Linux kernel. It
+ allows one to virtually merge the contents of several directories and/or stack
+ them, so that apparent file changes in the aufs end in file changes in only one
+ of the source directories.
+ .
+ This package contains utilities needed to configure aufs containers on-the-fly.
+
+Package: aufs-tools-dbg
+Section: debug
+Priority: extra
+Architecture: linux-any
+Depends: ${misc:Depends}, aufs-tools (= ${binary:Version})
+Description: Tools to manage aufs filesystems (debug)
+ The aufs driver provides a unification file system for the Linux kernel. It
+ allows one to virtually merge the contents of several directories and/or stack
+ them, so that apparent file changes in the aufs end in file changes in only one
+ of the source directories.
+ .
+ This package contains the debugging symbols for the utilities needed to
+ configure aufs containers on-the-fly.

@@ -1,0 +1,14 @@
+Author: Daniel Baumann <mail@daniel-baumann.ch>
+Description: Don't build static linked binaries.
+
+diff -Naurp aufs-tools.orig/Makefile aufs-tools/Makefile
+--- aufs-tools.orig/Makefile
++++ aufs-tools/Makefile
+@@ -55,7 +55,6 @@ all: ver_test ${Man} ${Bin} ${Etc}
+ ver_test: ver
+ 	./ver
+ 
+-${Bin}: LDFLAGS += -static -s
+ ${Bin}: LDLIBS = -L. -lautil
+ ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
+ 

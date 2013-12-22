@@ -1,0 +1,26 @@
+Author: Daniel Baumann <mail@daniel-baumann.ch>
+Description:
+ Correcting example syntax, thanks to Dan Greene <dan-greene@wi.rr.com>
+ (Closes: #700111).
+
+diff -Naurp aufs-tools.orig/aufs.in.5 aufs-tools/aufs.in.5
+--- aufs-tools.orig/aufs.in.5
++++ aufs-tools/aufs.in.5
+@@ -1769,7 +1769,7 @@ shows how the options are handled. (assu
+ installed)
+ 
+ .nf
+-# mount -v -t aufs br:/day0:/base none /u
++# mount -v -t aufs -o br:/day0:/base none /u
+ none on /u type aufs (rw,xino=/day0/.aufs.xino,br:/day0=rw:/base=ro)
+ # mount -v -o remount,\\
+ 	prepend:/day1,\\
+@@ -1781,7 +1781,7 @@ none on /u type aufs (rw,xino=/day1/xino
+ .fi
+ 
+ .nf
+-# mount -t aufs br:/rw none /u
++# mount -t aufs -o br:/rw none /u
+ # mount -o remount,append:/ro /u
+ different uid/gid/permission, /ro
+ # mount -o remount,del:/ro /u
