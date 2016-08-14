@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2011 Junjiro R. Okajima
+ * Copyright (C) 2005-2015 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,14 +133,18 @@ static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 			*a++ = argv[i];
 	*a++ = dev;
 	*a++ = mntpnt;
-	*a++ = NULL;
+	*a = NULL;
+
+	i = a - av;
+	if (i > ac)
+		AuFin("internal error, %d > %d\n", i, ac);
 
 #ifdef DEBUG
 	for (i = 0; av[i] && i < ac; i++)
 		puts(av[i]);
 	exit(0);
 #endif
-	execvp(MOUNT_CMD_PATH "mount", av);
+	execv(MOUNT_CMD, av);
 	AuFin("mount");
 }
 
@@ -247,6 +251,8 @@ int main(int argc, char *argv[])
 	err = !WIFEXITED(status);
 	if (!err)
 		err = WEXITSTATUS(status);
+
+	mng_fhsm(cwd, /*umount*/0);
 
 	if (!err && !flags[Bind]) {
 		if (flags[Update])

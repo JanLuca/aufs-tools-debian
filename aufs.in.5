@@ -49,8 +49,8 @@ e.g. left to right.
 .RS
 .Bu
 create or remove
-whiteout-base(\*[AUFS_WH_BASE]) and
-whplink-dir(\*[AUFS_WH_PLINKDIR]) if necessary
+whiteout\-base(\*[AUFS_WH_BASE]) and
+whplink\-dir(\*[AUFS_WH_PLINKDIR]) if necessary
 .RE
 .
 .TP
@@ -60,13 +60,14 @@ Adds new branches.
 
 Aufs rejects the branch which is an ancestor or a descendant of another
 branch. It is called overlapped. When the branch is loopback-mounted
-directory, aufs also checks the source fs-image file of loopback
+directory, aufs also checks the source fs\-image file of loopback
 device. If the source file is a descendant of another branch, it will
 be rejected too.
 
 After mounting aufs or adding a branch, if you move a branch under
 another branch and make it descendant of another branch, aufs will not
-work correctly. By default, aufs prohibits such operation internally,
+work correctly. By default (since linux\-3.2 until linux\-3.18\-rc1), aufs
+prohibits such operation internally,
 but there left a way to do.
 (cf. Branch Syntax).
 .
@@ -75,8 +76,8 @@ but there left a way to do.
 Adds a new branch.
 The index begins with 0.
 Aufs creates
-whiteout-base(\*[AUFS_WH_BASE]) and
-whplink-dir(\*[AUFS_WH_PLINKDIR]) if necessary.
+whiteout\-base(\*[AUFS_WH_BASE]) and
+whplink\-dir(\*[AUFS_WH_PLINKDIR]) if necessary.
 
 If there is the same named file on the lower branch (larger index),
 aufs will hide the lower file.
@@ -99,22 +100,22 @@ adding, you need to restart your process or open/mmap the file again.
 .B del:dir
 Removes a branch.
 Aufs does not remove
-whiteout-base(\*[AUFS_WH_BASE]) and
-whplink-dir(\*[AUFS_WH_PLINKDIR]) automatically.
+whiteout\-base(\*[AUFS_WH_BASE]) and
+whplink\-dir(\*[AUFS_WH_PLINKDIR]) automatically.
 For example, when you add a RO branch which was unified as RW, you
-will see whiteout-base or whplink-dir on the added RO branch.
+will see whiteout\-base or whplink\-dir on the added RO branch.
 
 If a process is referencing the file/directory on the deleting branch
 (by open, mmap, current working directory, etc.), aufs will return an
-error EBUSY. In this case, a script `aubusy' (in aufs-util.git and aufs2-util.git) is
+error EBUSY. In this case, a script `aubusy' (in aufs\-util.git and aufs2\-util.git) is
 useful to identify which process (and which file) makes the branch busy.
 .
 .TP
 .B mod:BRANCH
 Modifies the permission flags of the branch.
 Aufs creates or removes
-whiteout-base(\*[AUFS_WH_BASE]) and/or
-whplink-dir(\*[AUFS_WH_PLINKDIR]) if necessary.
+whiteout\-base(\*[AUFS_WH_BASE]) and/or
+whplink\-dir(\*[AUFS_WH_PLINKDIR]) if necessary.
 
 If the branch permission is been changing `rw' to `ro', and a process
 is mapping a file by mmap(2)
@@ -122,7 +123,7 @@ is mapping a file by mmap(2)
 on the branch, the process may or may not
 be able to modify its mapped memory region after modifying branch
 permission flags.
-Additioanlly when you enable CONFIG_IMA (in linux-2.6.30 and later), IMA
+Additionally when you enable CONFIG_IMA (in linux\-2.6.30 and later), IMA
 may produce some wrong messages. But this is equivalent when the
 filesystem is changed `ro' in emergency.
 (cf. Branch Syntax).
@@ -187,7 +188,7 @@ a branch.
 Truncate the external inode number translation table per branch. The
 branch can be specified by path or index (its origin is 0).
 Sometimes the size of a xino file for tmpfs branch grows very big. If
-you don't like such situation, try "mount -o
+you don't like such situation, try "mount \-o
 remount,trunc_xino_path=BRANCH /your/aufs" (or itrunc_xino=INDEX). It
 will shrink the xino file for BRANCH. These options are one time
 actions. So the size may grow again. In order to make it work
@@ -199,21 +200,29 @@ These options are already implemented, but its design is not fixed
 .B trunc_xino | notrunc_xino
 Enable (or disable) the automatic truncation of xino files.
 The truncation is done by discarding the internal "hole" (unused blocks).
-When the number of blocks by the xino file for the branch exceeds
-the predefined upper limit, the automatic truncation begins. If the xino
-files contain few holes and the result size is still exceeds the upper
-limit, then the upper limit is added by \*[AUFS_XINO_TRUNC_STEP] blocks. The
-initial upper limit is \*[AUFS_XINO_TRUNC_INIT] blocks.
-Currently the type of branch fs supported by this automatic truncation
-is tmpfs or ramfs only.
+.\" When the number of blocks by the xino file for the branch exceeds
+.\" the predefined upper limit, the automatic truncation begins. If the xino
+.\" files contain few holes and the result size is still exceeds the upper
+.\" limit, then the upper limit is added by \*[AUFS_XINO_TRUNC_STEP] blocks. The
+.\" initial upper limit is \*[AUFS_XINO_TRUNC_INIT] blocks.
+.\" Currently the type of branch fs supported by this automatic truncation
+.\" is tmpfs or ramfs only.
 The default is notrunc_xino.
 These options are already implemented, but its design is not fixed
 (cf. External Inode Number Bitmap, Translation Table and Generation Table).
 
-TODO: costomizable two values for upper limit
+TODO: customizable two values for upper limit
 \" .
 \" .TP
 \" .B trunc_xino_v=n:n
+.
+.TP
+.B acl
+.TQ
+.B noacl
+Enable or disable POSIX Access Control List. This feature is totally
+depending upon the branch fs. If your branch fs doesn't support POSIX
+ACL, these options are meaningless. CONFIG_FS_POSIX_ACL is required.
 .
 .TP
 .B create_policy | create=CREATE_POLICY
@@ -228,7 +237,7 @@ try keeping their operations in the branch where the source exists.
 .TP
 .B dio
 Enable Direct I/O support (including Linux AIO), and always make open(2)
-with O_DIRECT success. But if your branch filessystem doesn't support
+with O_DIRECT success. But if your branch filesystem doesn't support
 it, then the succeeding I/O will fail
 (cf, Direct I/O).
 .
@@ -253,7 +262,7 @@ This is default value.
 .B sum
 df(1)/statfs(2) returns the total number of blocks and inodes of
 all branches.
-When the block size of all branches are not equal, aufs choses the
+When the block size of all branches are not equal, aufs chooses the
 smallest one and calculate the number of blocks (including bavail and
 bfree).
 Note that there are cases that systemcalls may return ENOSPC, even if
@@ -277,7 +286,7 @@ required to unlink all of whiteouts internally before issuing
 rmdir/rename to the branch.
 To reduce the cost of single systemcall,
 aufs renames the target dir to a whiteout-ed temporary name and
-invokes a pre-created
+invokes a pre\-created
 kernel thread to remove whiteout-ed children and the target dir.
 The rmdir/rename systemcall returns just after kicking the thread.
 
@@ -295,7 +304,7 @@ The default value is \*[AUFS_DIRWH_DEF].
 Specifies a size of internal VDIR block which is allocated at a time in
 byte.
 The VDIR block will be allocated several times when necessary. If your
-directory has millions of files, you may want to expand this size.
+directory has tens of thousands of files, you may want to expand this size.
 The default value is defined as \*[AUFS_RDBLK_DEF].
 The size has to be lager than NAME_MAX (usually 255) and kmalloc\-able
 (the maximum limit depends on your system. at least 128KB is available
@@ -315,7 +324,7 @@ Specifies a size of internal VDIR hash table which is used to compare
 the file names under the same named directory on multiple branches.
 The VDIR hash table will be allocated in readdir(3)/getdents(2),
 rmdir(2) and rename(2) for the existing target directory. If your
-directory has millions of files, you may want to expand this size.
+directory has tens of thousands of files, you may want to expand this size.
 The default value is defined as \*[AUFS_RDHASH_DEF].
 The size has to be lager than zero, and it will be multiplied by 4 or 8
 (for 32\-bit and 64\-bit respectively, currently). The result must be
@@ -341,8 +350,8 @@ The default is `plink' which means use this feature.
 .
 .TP
 .B clean_plink
-Removes all pseudo-links in memory.
-In order to make pseudo-link permanent, use
+Removes all pseudo\-links in memory.
+In order to make pseudo\-link permanent, use
 `auplink' utility just before one of these operations,
 unmounting aufs,
 using `ro' or `noplink' mount option,
@@ -351,7 +360,7 @@ adding a branch into aufs,
 or changing your writable branch as readonly.
 If you installed both of /sbin/mount.aufs and /sbin/umount.aufs, and your
 mount(8) and umount(8) support them,
-`auplink' utility will be executed automatically and flush pseudo-links.
+`auplink' utility will be executed automatically and flush pseudo\-links.
 (cf. Pseudo Link)
 .
 .TP
@@ -367,11 +376,11 @@ In other words, to create `\*[AUFS_WH_DIROPQ]' under the created or renamed
 directory, or not to create.
 When you specify diropq=w or diropq=whiteouted, aufs will not create
 it if the
-directory was not whiteouted or opaqued. If the directory was whiteouted
+directory was not whiteout-ed or opaqued. If the directory was whiteout-ed
 or opaqued, the created or renamed directory will be opaque.
 When you specify diropq=a or diropq==always, aufs will always create
 it regardless
-the directory was whiteouted/opaqued or not.
+the directory was whiteout-ed/opaqued or not.
 The default value is diropq=w, it means not to create when it is unnecessary.
 .\" If you define CONFIG_AUFS_COMPAT at aufs compiling time, the default will be
 .\" diropq=a.
@@ -401,8 +410,26 @@ If you enable CONFIG_AUFS_SHWH and specify `shwh' option, aufs
 will show you the name of whiteouts
 with keeping its feature to hide the lowers.
 Honestly speaking, I am rather confused with this `visible whiteouts.'
-But a user who originally requested this feature wrote a nice how-to
+But a user who originally requested this feature wrote a nice how\-to
 document about this feature. See Tips file in the aufs CVS tree.
+.
+.TP
+.B dirperm1
+.TQ
+.B nodirperm1
+By default (nodirperm1), aufs respects the directory permission bits on
+all branches equally, which means if the permission bits for a directory
+on a lower readonly branch prohibits you to read, then you cannot read
+even if you run "chmod a+rx" (and aufs copies it up).
+With this option (dirperm1), the behavior changes and aufs checks the
+permission bits of the directory on the topmost branch and the
+permission bits on all lower branches are ignored.
+In other words, you read a directory even if the lower readonly branch
+fs prohibits it by its permission bits.
+
+This feature may invite a security risk similar to the world writable
+upper branch. As this case, dirperm1 option will produce a warning too.
+
 
 .\" ----------------------------------------------------------------------
 .SH Module Parameters
@@ -435,6 +462,20 @@ But I don't think users want to rename branches so often.
 If CONFIG_SYSFS is disable, this parameter is always set to 0.
 .
 .TP
+.B allow_userns= Y | N
+Allows an unprivileged mount under user namespace.
+Userns mount to put AUFS into a chroot environment can be useful
+while it as a security worry. This parameter sets an internal flag
+FS_USERNS_MOUNT and allows userns unconditionally.
+
+See the discussion in
+http://www.mail\-archive.com/aufs\-users@lists.sourceforge.net/msg04266.html
+and its thread.
+
+The default is `N'.
+If CONFIG_USER_NS is disabled, this parameter is meaningless.
+.
+.TP
 .B sysrq=key
 Specifies MagicSysRq key for debugging aufs.
 You need to enable both of CONFIG_MAGIC_SYSRQ and CONFIG_AUFS_DEBUG.
@@ -451,7 +492,108 @@ The default is `0' (disable).
 
 .\" ----------------------------------------------------------------------
 .SH Entries under Sysfs and Debugfs
-See linux/Documentation/ABI/*/{sys,debug}fs-aufs.
+See linux/Documentation/ABI/*/{sys,debug}fs\-aufs.
+
+.\" ----------------------------------------------------------------------
+.SH For the better performance
+In order to gain a better performance, there are a few steps. They are
+essentially to drop the features from aufs, and to gain a performance in
+return for them. You don't have to drop all of them. It may be too
+much. Try step by step with measuring the performance you want using
+your typical workload.
+
+.SS Patch file
+.
+As my recommendation, there is one patch file in aufs[34]\-standalone.git
+tree, tmpfs\-idr.patch. It introduces IDR for
+the tmpfs inode\-number management, and has an effect to prevent the
+size of aufs's XINO/XIB files to grow rapidly. If you don't use TMPFS as
+your branch, the patch won't be necessary.
+
+.SS Configuration
+.
+Disable all unnecessary ones except CONFIG_AUFS_RDU (readdir in
+user\-space). RDU requires an external user\-space library libau.so, but
+it is so effective particularly for the directory which has tens of
+thousands of files. To use RDU, users have to set LD_PRELOAD environment
+variable. If he doesn't set, this configuration will do no harm. The
+size of aufs module will be larger a little, but the time\-performance
+(speed) won't be damaged.
+
+.SS Mount option
+.
+As a first step, I'd recommend you to try `dirperm1' and `udba=none.'
+The former prohibits aufs to dig down the lower branches in checking the
+directory permission bits, and the latter makes aufs not to watch the
+external modification, eg. by\-passing aufs (users' direct branch access).
+These options are able to be changed and restored anytime.
+
+For the second step, try `notrunc_xino' and `notrunc_xib.'
+It is not always when they are so effective. Especially if you have
+applied tmpfs\-idr.patch, then the effect is small since the most
+of effect is done by the patch. But there surely exists their effect. In
+this case, the size of XINO and XIB will grow only, not truncated. In
+other word, it is a time\-vs\-space issue.
+
+For the third and last step, try `noplink' and `noxino.'
+With these options, aufs behaves unreliably a little, which means lose
+the features maintaining the hard\-link (pseudo\-link) and the inode
+numbers. Some behaviours may surprise users, but many internal process
+will be skipped and the result performance will be better.
+
+.\" ----------------------------------------------------------------------
+.SH Git work\-tree and aufs
+Git has a cache called `index' file. In this cache there are the
+identity of the files individually. Here `identity' means a pair of
+struct stat.st_{dev,ino}. (Git may consider other stat members too. But
+the essential part of the identity is still dev and ino.)
+
+Since aufs is a virtual filesystem and manages the inode numbers, it
+provides its own st_dev and st_ino. They differ from the `index' cache
+in git, and some git operations have to refresh the `index' cache, which
+may take long time.
+For instance,
+.RS
+.Bu
+/branch/ro has 0x0801 for its st_dev
+.Bu
+/branch/ro/proj.git/fileA has 100 for its st_ino
+.Bu
+/branch/ro/proj.git/.git/index contains {0x0801,100} as fileA's
+  identity
+.Bu
+mount /u as /branch/rw + /branch/ro, /u is aufs
+.Bu
+we can see the contents of /u/proj.git/.git/index is equivalent to
+  /branch/ro/proj.git/.git/index
+.RE
+
+In this case, aufs provides {0x0802,110} (for example) for fileA's
+identity, which is different from /branch/ro/proj.git/fileA.
+If you run git\-diff or something, the
+behaviour of git differs a little.
+.RS
+.Bu
+git issues stat(2) and gets st_{dev,ino} pair.
+.Bu
+git compares the gotten pair and the one in the index file.
+.Bu
+when they are different from each other, git opens the file, reads all
+  data, compares it with the cached data, and finds there is nothing
+  changed.
+.Bu
+if the gotten pair is equal to the one in the index file, then
+  open/read/compare steps will be skipped.
+.RE
+
+This issue can happen when you copy the git working tree to somewhere
+else. All files identity will be changed by the copy and the cached
+identity in index file will be obsoleted.
+Once you complete git\-status or something, the index file will be
+updated, and full open/read/compare steps will not happen anymore.
+This behaviour of git can be controlled by git's configuration
+core.checkstat.
+
 
 .\" ----------------------------------------------------------------------
 .SH Branch Syntax
@@ -460,17 +602,20 @@ See linux/Documentation/ABI/*/{sys,debug}fs-aufs.
 .TQ
 .B permission := rw | ro | rr
 .TQ
-.B attribute := wh | nolwh
+.B attribute := wh | nolwh | unpin | coo_reg | coo_all | moo | fhsm | icexsec | icexsys | icextr | icexusr | icexoth | icex
 dir_path is a directory path.
 The keyword after `dir_path=' is a
 permission flags for that branch.
-Comma, colon and the permission flags string (including `=')in the path
+Comma, colon and the permission flags string (including `=') in the path
 are not allowed.
 
-Any filesystem can be a branch, But some are not accepted such like
+Any (ordinary) filesystem can be a branch, But some are not accepted such like
 sysfs, procfs and unionfs.
 If you specify such filesystems as an aufs branch, aufs will return an error
 saying it is unsupported.
+Also aufs expects the writable branch filesystem supports the maximum
+filename length as NAME_MAX. The readonly branch filesystem can be
+shorter.
 
 Cramfs in linux stable release has strange inodes and it makes aufs
 confused. For example,
@@ -526,7 +671,7 @@ Real readonly branch, special case of `ro', for natively readonly
 branch. Assuming the branch is natively readonly, aufs can optimize
 some internal operation. For example, if you specify `udba=notify'
 option, aufs does not set fsnotify or inotify for the things on rr branch.
-Set by default for a branch whose fs-type is either `iso9660',
+Set by default for a branch whose fs\-type is either `iso9660',
 `cramfs' or `romfs' (and `squashfs' for linux\-2.6.29 and later).
 
 When your branch exists on slower device and you have some
@@ -557,7 +702,7 @@ whiteout, including the source file of all hardlinked whiteout
 If you do not like a hardlink, or your writable branch does not support
 link(2), then use this attribute.
 But I am afraid a filesystem which does not support link(2) natively
-will fail in other place such as copy-up.
+will fail in other place such as copy\-up.
 Use this as `<branch_dir>=rw+nolwh'.
 Also you may want to try `noplink' mount option, while it is not recommended.
 .
@@ -570,6 +715,87 @@ this attribute is implemented. If you specify `unpin' as a branch
 attribute, it stops behaving as a mount\-point and you can rename the
 branch top dir.
 Needless to say, if you remove the branch top dir, then aufs cannot work.
+
+Since linux\-3.18\-rc1, this attribute became meaningless. It is simply
+ignored and all branch top dir behaves as this attribute is always
+specified.
+.
+.TP
+.B coo_reg | coo_all
+Copy\-up on open.
+By default the internal copy\-up is executed when it is really necessary.
+It is not done when a file is opened for writing, but when any writing is
+done.
+
+These attributes are for not only the readonly branches but
+also the writable branches. `coo_reg' handles the regular files only and
+`coo_all' handles the regular files plus the directories. All special
+files and symlinks will not be copied\-up.
+Additionally NFS server may not issue open(2) when NFS client issues
+open(2). This behavior means that the file may not be copied\-up when
+NFS client issues open(2).
+
+The internal copy\-up operation by these attributes are unrelated to
+the COPYUP_POLICY
+(cf. Policies to Select One among Multiple Writable Branches),
+which means `copy\-up on open' always choose the nearest upper writable
+branch.
+Even if there are multiple writable branches set these attributes,
+the internal copy\-up operation is done once, not recursively.
+
+Users who have many (over 100) branches want to know and analyze
+when and what file is copied\-up. To insert a new upper branch which
+contains such files only may improve the performance of aufs.
+The `copy\-up on open' itself may not be so attractive, but combining
+with a feature FHSM (File\-based Hierarchy Storage Management)
+will be useful.
+.
+.TP
+.B moo
+Move\-up on open.
+Very similar attribute to coo except moo unlinks the copy\-up source
+after the successful operation. This attribute handles the regular files
+only, and obviously cannot be specified to the readonly branch.
+
+Users can specify all these attributes for a single writable branch, but
+only the last specified one has its effect. Other coo/moo attributes are
+silently ignored.
+
+The `move\-up on open' itself may not be so attractive, but combining
+with a feature FHSM (File\-based Hierarchy Storage Management)
+will be useful.
+.
+.TP
+.B fhsm
+File\-based Hierarchy Storage Management.
+Specifies that this branch is a participant of aufs FHSM. Refer to
+.B
+aufs_fhsm(5)
+in detail.
+.
+.TP
+.B icexsec | icexsys | icextr | icexusr | icexoth | icex
+Ignore the error on copying\-up/down XATTR.
+When an internal copy\-up/down happens, aufs tries copying all XATTRs.
+Here an error can happen because of the XATTR support on the dst
+branch may different from the src branch. If you know how the branch
+supports or unsupports XATTR, you can specify these attributes.
+`icexsec' means to ignore an error on copying\-up/down XATTR categorized
+as "security" (for LSM and capability). And `icexsys,' `icextr,' and
+`icexusr,' are for "system" (for posix ACL), "trusted" and "user"
+categories individually.
+`icexoth' is for any other category. To be convenient, `icex` sets them
+all.
+See also linux/Documentation/filesystems/aufs/design/06xattr.txt.
+
+These attributes are essentially for the writable branches. But when you
+use
+.B
+aufs_fhsm(5),
+you may want to
+specify them to the readonly branches too. So they are available for the
+readonly branches.
+
 
 .\" .SS FUSE as a branch
 .\" A FUSE branch needs special attention.
@@ -692,7 +918,7 @@ xino file will be the largest inode number on a branch x 4 bytes.
 Additionally, the file size is limited to LLONG_MAX or the s_maxbytes
 in filesystem's superblock (s_maxbytes may be smaller than
 LLONG_MAX). So the
-support-able largest inode number on a branch is less than
+support\-able largest inode number on a branch is less than
 2305843009213693950 (LLONG_MAX/4\-1).
 This is the current limitation of aufs.
 On 64bit environment, this limitation becomes more strict and the
@@ -710,7 +936,7 @@ For 64bit environment, replace 4 by 8 in above equation.
 The xino files are always hidden, i.e. removed. So you cannot
 do `ls \-l xino_file'.
 If you enable CONFIG_DEBUG_FS, you can check these information through
-<debugfs>/aufs/<si_id>/{xib,xi[0-9]*,xigen}. xib is for the bitmap file,
+<debugfs>/aufs/<si_id>/{xib,xi[0\-9]*,xigen}. xib is for the bitmap file,
 xi0 ix for the first branch, and xi1 is for the next. xigen is for the
 generation table.
 xib and xigen are in the format of,
@@ -720,12 +946,12 @@ xib and xigen are in the format of,
 .fi
 
 Note that a filesystem usually has a
-feature called pre-allocation, which means a number of
+feature called pre\-allocation, which means a number of
 blocks are allocated automatically, and then deallocated
 silently when the filesystem thinks they are unnecessary.
 You do not have to be surprised the sudden changes of the number of
 blocks, when your filesystem which xino files are placed supports the
-pre-allocation feature.
+pre\-allocation feature.
 
 The rests are hidden xino file information in the format of,
 
@@ -768,6 +994,12 @@ $ cp --sparse=always <current xino file> <new xino file> &&
 It means that you have two xino files during the copy, and you should
 pay attention to the free space of the filesystem where the xino file is
 located.
+If the free space is not large enough to hold two xino files temporary
+during the copy, then the truncation fails and the xino file will go on
+growing. For such case, you should move the xino file to another larger
+partition, and move it back to where it was (if you want). To do this,
+use `xino=' mount option. During this move, the xino file is truncated
+automatically.
 
 If you do not want to truncate it (it may be slow) when you delete a
 branch, specify `notrunc_xib' after `del' mount option.
@@ -800,15 +1032,15 @@ changed as totally different file.
 
 .\" ----------------------------------------------------------------------
 .SH Pseudo Link (hardlink over branches)
-Aufs supports `pseudo link' which is a logical hard-link over
+Aufs supports `pseudo link' which is a logical hard\-link over
 branches (cf. ln(1) and link(2)).
-In other words, a copied-up file by link(2) and a copied-up file which was
-hard-linked on a readonly branch filesystem.
+In other words, a copied\-up file by link(2) and a copied\-up file which was
+hard\-linked on a readonly branch filesystem.
 
 When you have files named fileA and fileB which are
 hardlinked on a readonly branch, if you write something into fileA,
-aufs copies-up fileA to a writable branch, and write(2) the originally
-requested thing to the copied-up fileA. On the writable branch,
+aufs copies\-up fileA to a writable branch, and write(2) the originally
+requested thing to the copied\-up fileA. On the writable branch,
 fileA is not hardlinked.
 But aufs remembers it was hardlinked, and handles fileB as if it existed
 on the writable branch, by referencing  fileA's inode on the writable
@@ -816,7 +1048,7 @@ branch as fileB's inode.
 
 Once you unmount aufs, the plink info for that aufs kept in memory are totally
 gone.
-It means that the pseudo-link is not permanent.
+It means that the pseudo\-link is not permanent.
 If you want to make plink permanent, try `auplink' utility just before
 one of these operations,
 unmounting your aufs,
@@ -826,7 +1058,7 @@ adding a branch into aufs,
 or changing your writable branch to readonly.
 
 This utility will reproduces all real hardlinks on a writable branch by linking
-them, and removes pseudo-link info in memory and temporary link on the
+them, and removes pseudo\-link info in memory and temporary link on the
 writable branch.
 Since this utility access your branches directly, you cannot hide them by
 `mount \-\-bind /tmp /branch' or something.
@@ -835,18 +1067,18 @@ If you are willing to rebuild your aufs with the same branches later, you
 should use auplink utility before you umount your aufs.
 If you installed both of /sbin/mount.aufs and /sbin/umount.aufs, and your
 mount(8) and umount(8) support them,
-`auplink' utility will be executed automatically and flush pseudo-links.
+`auplink' utility will be executed automatically and flush pseudo\-links.
 
-During this utility is running, it puts aufs into the pseudo-link
+During this utility is running, it puts aufs into the pseudo\-link
 maintenance mode. In this mode, only the process which began the
 maintenance mode (and its child processes) is allowed to operate in
-aufs. Some other processes which are not related to the pseudo-link will
+aufs. Some other processes which are not related to the pseudo\-link will
 be allowed to run too, but the rest have to return an error or wait
 until the maintenance mode ends. If a process already acquires an inode
 mutex (in VFS), it has to return an error.
 
-Due to the fact that the pseudo-link maintenance mode is operated via
-procfs, the pseudo-link feature itself (including the related mount
+Due to the fact that the pseudo\-link maintenance mode is operated via
+procfs, the pseudo\-link feature itself (including the related mount
 options) depends upon CONFIG_PROC_FS too.
 
 .nf
@@ -868,7 +1100,7 @@ or
 
 The plinks are kept both in memory and on disk. When they consumes too much
 resources on your system, you can use the `auplink' utility at anytime and
-throw away the unnecessary pseudo-links in safe.
+throw away the unnecessary pseudo\-links in safe.
 
 Additionally, the `auplink' utility is very useful for some security reasons.
 For example, when you have a directory whose permission flags
@@ -877,17 +1109,17 @@ all files under the 0700 directory are private and no one else can see
 the file. But when the directory is 0711 and someone else knows the 0644
 filename, he can read the file.
 
-Basically, aufs pseudo-link feature creates a temporary link under the
+Basically, aufs pseudo\-link feature creates a temporary link under the
 directory whose owner is root and the permission flags are 0700.
 But when the writable branch is NFS, aufs sets 0711 to the directory.
-When the 0644 file is pseudo-linked, the temporary link, of course the
+When the 0644 file is pseudo\-linked, the temporary link, of course the
 contents of the file is totally equivalent, will be created under the
 0711 directory. The filename will be generated by its inode number.
 While it is hard to know the generated filename, someone else may try peeping
-the temporary pseudo-linked file by his software tool which may try the name
+the temporary pseudo\-linked file by his software tool which may try the name
 from one to MAX_INT or something.
 In this case, the 0644 file will be read unexpectedly.
-I am afraid that leaving the temporary pseudo-links can be a security hole.
+I am afraid that leaving the temporary pseudo\-links can be a security hole.
 It makes sense to execute `auplink /your/aufs/root flush'
 periodically, when your writable branch is NFS.
 
@@ -896,7 +1128,7 @@ to their private files, you do not have to worry about this issue.
 
 If you do not want this feature, use `noplink' mount option.
 
-.SS The behaviours of plink and noplink
+.SS The behaviors of plink and noplink
 This sample shows that the `f_src_linked2' with `noplink' option cannot follow
 the link.
 
@@ -908,7 +1140,7 @@ ls: ./copied: No such file or directory
 15 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ../ro/f_src_linked2
 22 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ./f_src_linked
 22 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ./f_src_linked2
-$ echo abc >> f_src_linked
+$ echo FOO >> f_src_linked
 $ cp f_src_linked copied
 $ ls -li ../r?/f_src_linked* ./f_src_linked* ./copied
 15 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ../ro/f_src_linked
@@ -927,7 +1159,7 @@ ls: ./copied: No such file or directory
 17 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ../ro/f_src_linked2
 23 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ./f_src_linked
 23 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ./f_src_linked2
-$ echo abc >> f_src_linked
+$ echo FOO >> f_src_linked
 $ cp f_src_linked copied
 $ ls -li ../r?/f_src_linked* ./f_src_linked* ./copied
 17 -rw-r--r--  2 jro jro 2 Dec 22 11:03 ../ro/f_src_linked
@@ -986,7 +1218,7 @@ test about UDBA. With this option, aufs runs fastest, but it may show
 you incorrect data.
 Additionally, if you often modify a branch
 directly, aufs will not be able to trace the changes of inodes on the
-branch. It can be a cause of wrong behaviour, deadlock or anything else.
+branch. It can be a cause of wrong behavior, deadlock or anything else.
 
 It is recommended to use this option only when you are sure that
 nobody access a file on a branch.
@@ -1040,7 +1272,7 @@ examples.
 .RS
 .Bu
 If the file is cached as negative or
-not-existed, aufs does not test it. And the file is still handled as
+not\-existed, aufs does not test it. And the file is still handled as
 negative after a user created the file on a branch directly. If the
 file is not cached, aufs will lookup normally and find the file.
 .
@@ -1054,7 +1286,7 @@ file which is on the lower branch.
 When the file is cached as positive or existed, and a user renamed the
 file by rename(2) directly. Aufs detects the inode of the file is
 still existing. You may or may not see both of the old and new files.
-Todo: If aufs also tests the name, we can detect this case.
+TODO: If aufs also tests the name, we can detect this case.
 .RE
 
 If your outer modification (UDBA) is rare and you can ignore the
@@ -1079,14 +1311,14 @@ When an error condition occurs between UDBA and aufs operation, aufs
 will return an error, including EIO.
 To use this option, you need to enable CONFIG_INOTIFY and
 CONFIG_AUFS_HINOTIFY.
-In linux-2.6.31, CONFIG_FSNOTIFY was introduced and CONFIG_INOTIFY was
-listed in Documentation/feature-removal-schedule.txt. In aufs2-31 and
+In linux\-2.6.31, CONFIG_FSNOTIFY was introduced and CONFIG_INOTIFY was
+listed in Documentation/feature\-removal\-schedule.txt. In aufs2\-31 and
 later (until CONFIG_INOTIFY is removed actually), you can choose either
 `fsnotify' or `inotify' in configuration. Whichever you choose, specify
 `udba=notify', and aufs interprets it as an abstract name.
 
 To rename/rmdir a directory on a branch directory may reveal the same named
-directory on the lower branch. Aufs tries re-lookuping the renamed
+directory on the lower branch. Aufs tries re-looking up the renamed
 directory and the revealed directory and assigning different inode
 number to them. But the inode number including their children can be a
 problem. The inode numbers will be changed silently, and
@@ -1101,9 +1333,15 @@ be removed, if someone wants. It is just an empty directory, instead
 of a mount point.
 Aufs cannot stop such direct rmdir, but produces a warning about it.
 
-If the pseudo-linked file is hardlinked or unlinked on the branch
+If the pseudo\-linked file is hardlinked or unlinked on the branch
 directly, its inode link count in aufs may be incorrect. It is
-recommended to flush the pseudo-links by auplink script.
+recommended to flush the pseudo\-links by auplink script.
+
+In linux\-4.2 (and later, probably), for the exported aufs, NFS doesn't
+show the changes at once
+and returns ESTALE even if you set udba=notify.
+It is a natural behaviour of linux NFS's
+and aufs can do nothing about it. Probably simple "sleep 1" will help.
 
 .\" ----------------------------------------------------------------------
 .SH Linux Inotify Limitation
@@ -1129,6 +1367,8 @@ IN_DELETE event. It depends upon the status of dentry
 (DCACHE_NFSFS_RENAMED flag).
 In this case, the file on aufs seems still exists. Aufs and any user can see
 the file.
+Since linux\-3.15\-rc1, this behavior has been changed and NFS fires the
+event from itself.
 
 .SS IN_IGNORED, deleted rename target
 When a file/dir on a branch is unlinked by rename(2) directly, inotify
@@ -1165,10 +1405,10 @@ The dynamically allocated memory block for the name of entries has a
 unit of \*[AUFS_RDBLK_DEF] bytes by default.
 During building dir blocks, aufs creates hash list (hashed and divided by
 \*[AUFS_RDHASH_DEF] by default) and judging whether
-the entry is whiteouted by its upper branch or already listed.
+the entry is whiteout-ed by its upper branch or already listed.
 
 These values are suitable for normal environments. But you may have
-millions of files or very long filenames under a single directory. For
+tens of thousands of files or very long filenames under a single directory. For
 such cases, you may need to customize these values by specifying rdblk=
 and rdhash= aufs mount options.
 
@@ -1186,12 +1426,12 @@ byte. In this case, you do not need to customize the default values. 597 bytes
 filenames will be stored in 2 VDIR memory blocks (597 <
 \*[AUFS_RDBLK_DEF] x 2).
 And 97 filenames are distributed among \*[AUFS_RDHASH_DEF] lists, so one
-list will point 4 names in average. To judge the names is whiteouted or
+list will point 4 names in average. To judge the names is whiteout-ed or
 not, the number of comparison will be 4. 2 memory allocations
 and 4 comparison costs low (even if the directory is opened for a long
 time). So you do not need to customize.
 
-If your directory has millions of files, the you will need to specify
+If your directory has tens of thousands of files, the you will need to specify
 rdblk= and rdhash=.
 
 .nf
@@ -1203,7 +1443,7 @@ In this case, assuming the average length of filenames is 6, in order to
 get better time performance I would
 recommend to set $((128*1024)) or $((64*1024)) for rdblk, and
 $((8*1024)) or $((4*1024)) for rdhash.
-You can change these values of the active aufs mount by "mount -o
+You can change these values of the active aufs mount by "mount \-o
 remount".
 
 This customization is not for
@@ -1214,8 +1454,8 @@ general. Of course, you will need system memory. This is a generic
 
 .\" ----------------------------------------------------------------------
 .SH Using libau.so
-There is a dynamic shared object library called libau.so in aufs-util
-or aufs2-util
+There is a dynamic shared object library called libau.so in aufs\-util
+or aufs2\-util
 GIT tree. This library provides several useful functions which wrap the
 standard library functions such as,
 .RS
@@ -1228,7 +1468,7 @@ pathconf, fpathconf
 To use libau.so,
 .RS
 .Bu
-install by "make install_ulib" under aufs-util (or aufs2-util) GIT tree
+install by "make install_ulib" under aufs\-util (or aufs2\-util) GIT tree
 .Bu
 set the environment variable "LD_PRELOAD=libau.so", or configure
 /etc/ld.so.preload
@@ -1242,8 +1482,9 @@ If you use pathconf(3)/fpathconf(3) with _PC_LINK_MAX for aufs, you need
 to use libau.so.
 
 .SS VDIR/readdir(3) in user\-space (RDU)
-If you have a directory which has millions of files, aufs VDIR consumes
-much memory. You may meet "out of memory" message due to
+If you have a directory which has tens of thousands of files, aufs VDIR consumes
+much memory. So the program which reads a huge directory may produce an
+"out of memory" or "page allocation failure" message in the syslog, due to
 the memory fragmentation or real starvation.
 In this case, RDU (readdir(3) in user\-space) may help you.
 Because the kernel memory space cannot be swappable and consuming much
@@ -1255,6 +1496,20 @@ Just simply run your application.
 The dynamic link library libau.so implements
 another readdir routine, and all readdir(3) calls in your application
 will be handled by libau.so.
+For setting environment variables, you may want to use a shell function
+or alias such like this.
+
+.nf
+$ auls()
+> {
+>	LD_PRELOAD=/your/path/to/libau.so
+>	\*[LibAuEnv]=all
+>	#AUFS_RDU_BLK= set if you want
+>	ls $@
+> }
+
+$ alias auls="LD_PRELOAD=/your/path/to/libau.so \*[LibAuEnv]=all ls"
+.fi
 
 When you call readdir(3), the dynamic linker calls readdir in libau.so.
 If it finds the passed dir is NOT aufs, it calls the usual readdir(3).
@@ -1330,8 +1585,8 @@ truncate the xino/xib files. Sometimes those files can be large and may
 take a long time to handle them.
 
 \" .SS a regular file in HFSPLUS
-\" HFSPLUS acquires an inode mutex lock at closing a file. This behaviour
-\" is not a problem, but aufs doesn't expect such behaviour and it had
+\" HFSPLUS acquires an inode mutex lock at closing a file. This behavior
+\" is not a problem, but aufs doesn't expect such behavior and it had
 \" caused a deadlock. So aufs added a special handling to copy\-up a
 \" regular file in HFSPLUS, eg. opens the file internally twice. It means
 \" there exists an additional overhead in copying a regular file in HFSPLUS.
@@ -1342,7 +1597,7 @@ take a long time to handle them.
 Aufs has some policies to select one among multiple writable branches
 when you are going to write/modify something. There are two kinds of
 policies, one is for newly create something and the other is for
-internal copy-up.
+internal copy\-up.
 You can select them by specifying mount option `create=CREATE_POLICY'
 or `cpup=COPYUP_POLICY.'
 These policies have no meaning when you have only one writable
@@ -1354,8 +1609,8 @@ new file should be created is /rw2, the file will be created on /rw1.
 .
 .Bu
 If there is a readonly branch with `wh' attribute above the
-policy-selected branch and the parent dir is marked as opaque,
-or the target (creating) file is whiteouted on the ro+wh branch, then
+policy\-selected branch and the parent dir is marked as opaque,
+or the target (creating) file is whiteout-ed on the ro+wh branch, then
 the policy will be ignored and the target file will be created on the
 nearest upper writable branch than the ro+wh branch.
 .RS
@@ -1366,8 +1621,8 @@ nearest upper writable branch than the ro+wh branch.
 .RE
 .
 .Bu
-If there is a writable branch above the policy-selected branch and the
-parent dir is marked as opaque or the target file is whiteouted on the
+If there is a writable branch above the policy\-selected branch and the
+parent dir is marked as opaque or the target file is whiteout-ed on the
 branch, then the policy will be ignored and the target file will be
 created on the highest one among the upper writable branches who has
 diropq or whiteout. In case of whiteout, aufs removes it as usual.
@@ -1396,9 +1651,9 @@ policy.
 .
 .TP
 .B create=tdp | top\-down\-parent
-Selects the highest writable branch where the parent dir exists. If
-the parent dir does not exist on a writable branch, then the internal
-copyup will happen. The policy for this copyup is always `bottom-up.'
+Select the highest branch where the parent dir exists. If this
+branch is not writable, internal copyup will happen.
+The policy for this copyup is always `bottom\-up.'
 This is the default policy.
 .
 .TP
@@ -1414,7 +1669,7 @@ all are created on the same branch.
 Selects a writable branch which has most free space. In order to keep
 the performance, you can specify the duration (`second') which makes
 aufs hold the index of last selected writable branch until the
-specified seconds expires. The seconds is upto \*[AUFS_MFS_MAX_SEC]
+specified seconds expires. The seconds is up to \*[AUFS_MFS_MAX_SEC]
 seconds.
 The first time you create something in aufs
 after the specified seconds expired, aufs checks the amount of free
@@ -1424,9 +1679,9 @@ The default value is \*[AUFS_MFS_DEF_SEC] seconds.
 .
 .TP
 .B create=mfsrr:low[:second]
-Selects a writable branch in most-free-space mode first, and then
-round-robin mode. If the selected branch has less free space than the
-specified value `low' in bytes, then aufs re-tries in round-robin mode.
+Selects a writable branch in most\-free\-space mode first, and then
+round\-robin mode. If the selected branch has less free space than the
+specified value `low' in bytes, then aufs re-tries in round\-robin mode.
 .\" `G', `M' and `K' (case insensitive) can be followed after `low.' Or
 Try an arithmetic expansion of shell which is defined by POSIX.
 For example, $((10 * 1024 * 1024)) for 10M.
@@ -1438,8 +1693,15 @@ the `mfs' mode.
 Selects a writable branch where the parent dir exists, such as tdp
 mode. When the parent dir exists on multiple writable branches, aufs
 selects the one which has most free space, such as mfs mode.
+.
+.TP
+.B create=pmfsrr:low[:second]
+Firstly selects a writable branch as the `pmfs mode.'
+If there are less than `low' bytes available on all branches where the
+parent dir exists, aufs selects the one which has the most free space
+regardless the parent dir.
 
-.SS Policies for Copy-Up
+.SS Policies for Copy\-Up
 .
 .TP
 .B cpup=tdp | top\-down\-parent
@@ -1449,23 +1711,23 @@ This is the default policy.
 .TP
 .B cpup=bup | bottom\-up\-parent
 Selects the writable branch where the parent dir exists and the branch
-is nearest upper one from the copyup-source.
+is nearest upper one from the copyup\-source.
 .
 .TP
 .B cpup=bu | bottom\-up
-Selects the nearest upper writable branch from the copyup-source,
+Selects the nearest upper writable branch from the copyup\-source,
 regardless the existence of the parent dir.
 
 .\" ----------------------------------------------------------------------
 .SH Exporting Aufs via NFS
-Aufs is supporting NFS-exporting.
+Aufs is supporting NFS\-exporting.
 Since aufs has no actual block device, you need to add NFS `fsid' option at
 exporting. Refer to the manual of NFS about the detail of this option.
 
 There are some limitations or requirements.
 .RS
 .Bu
-The branch filesystem must support NFS-exporting.
+The branch filesystem must support NFS\-exporting.
 .Bu
 NFSv2 is not supported. When you mount the exported aufs from your NFS
 client, you will need to some NFS options like v3 or nfsvers=3,
@@ -1495,7 +1757,7 @@ The branch filesystems must be accessible, which means `not hidden.'
 It means you need to `mount \-\-move' when you use initramfs and
 switch_root(8), or chroot(8).
 .Bu
-Since aufs has several filename prefixes reserved, the maxmum filename
+Since aufs has several filename prefixes reserved, the maximum filename
 length is shorter than ordinary 255. Actually \*[AUFS_MAX_NAMELEN]
 (defined as ${AUFS_MAX_NAMELEN}). This
 value should be specified as `namlen=' when you mount NFS.
@@ -1516,7 +1778,7 @@ and it tries reading /sys/fs/aufs/si_XXX/brNNN.
 The Direct I/O (including Linux AIO) is a
 filesystem (and its backend block device) specific feature.
 And there is a minor problem around the aufs internal
-copyup. If you have two branches, lower RO ext2 and upper RW tmpfs. As
+copyup. Assume you have two branches, lower RO ext2 and upper RW tmpfs. As
 you know ext2 supports Direct I/O, but tmpfs doesn't. When a
 `fileA' exists in the lower ext2, and you write something into after
 opening it with
@@ -1529,11 +1791,11 @@ Aufs opens the file in the lower ext2 and succeeds.
 .Bu
 The application issues write("something");
 
-Aufs copies-up the file from the lower ext2 to the upper tmpfs, and re-opens the
+Aufs copies\-up the file from the lower ext2 to the upper tmpfs, and re-opens the
 file in tmpfs with O_DIRECT. It fails and returns an error.
 .RE
 
-This behaviour may be a problem since application expects the error
+This behavior may be a problem since application expects the error
 should be returned from the first open(2) instead of the later
 write(2), when the filesystem doesn't support Direct I/O.
 (But, in real world, I don't think there is an application
@@ -1542,14 +1804,16 @@ problem actually).
 
 If the file exists in the upper tmpfs, the first open(2) will fail
 expectedly. So there is no problem in this case. But the problem may
-happen when the internal copyup happens and the behaviour of the branch
+happen when the internal copyup happens and the behavior of the branch
 differs from each other. As long as the feature depends upon the filesystem, this
 problem will not be solved. So aufs sets `nodio` by default, which means
-all Direct I/O are disabled, and oepn(2) with O_DIRECT always fails. If
+all Direct I/O are disabled, and open(2) with O_DIRECT always fails. If
 you want to use Direct I/O
-AND all your writeble branches support it, then specify `dio' option to
+AND all your writable branches support it, then specify `dio' option to
 make it in effect.
 
+With the similar reason, fcntl(F_SETFL, O_DIRECT) will not work for aufs
+file descriptor.
 
 .\" ----------------------------------------------------------------------
 .SH Possible problem of the inode number in TMPFS
@@ -1570,6 +1834,8 @@ If your writable branch FS is TMPFS and the inode number wraps
 around, aufs will not work correctly. It is recommended to use one of FS
 on HDD, ramdisk+ext2 or tmpfs+FSimage+loopback mount, as your writable
 branch FS.
+Or apply a patch in aufs4\-standalone.git. It addresses this
+tmpfs-inum-assignment problem by modifying the source file other than aufs.
 
 
 .\" ----------------------------------------------------------------------
@@ -1598,11 +1864,11 @@ specified filesystem.
 
 Ignoring `delete' option, and to keep filesystem consistency, aufs tries
 writing something to only one branch in a single systemcall. It means
-aufs may copyup even if the copyup-src branch is specified as writable.
+aufs may copyup even if the copyup\-src branch is specified as writable.
 For example, you have two writable branches and a large regular file
 on the lower writable branch. When you issue rename(2) to the file on aufs,
 aufs may copyup it to the upper writable branch.
-If this behaviour is not what you want, then you should rename(2) it
+If this behavior is not what you want, then you should rename(2) it
 on the lower branch directly.
 
 And there is a simple shell
@@ -1649,9 +1915,9 @@ inodes will be decremented by link(2). It is recommended to specify
 nr_inodes option to your tmpfs if you meet ENOSPC. Use this option
 after checking by `df \-i.'
 
-When you rmdir or rename-to the dir who has a number of whiteouts,
-aufs rename the dir to the temporary whiteouted-name like
-`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX]<dir>.<\*[AUFS_WH_TMP_LEN]-digits hex>.'
+When you rmdir or rename\-to the dir who has a number of whiteouts,
+aufs rename the dir to the temporary whiteout-ed name like
+`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX]<dir>.<\*[AUFS_WH_TMP_LEN]\-digits hex>.'
 Then remove it after actual operation.
 cf. mount option `dirwh.'
 
@@ -1666,11 +1932,11 @@ The timestamp of a directory will not be updated when a file is
 created or removed under it, and it was done on a lower branch.
 
 The test for permission bits has two cases. One is for a directory,
-and the other is for a non-directory. In the case of a directory, aufs
+and the other is for a non\-directory. In the case of a directory, aufs
 checks the permission bits of all existing directories. It means you
 need the correct privilege for the directories including the lower
 branches.
-The test for a non-directory is more simple. It checks only the
+The test for a non\-directory is more simple. It checks only the
 topmost inode.
 
 statfs(2) returns the information of the first branch info except
@@ -1680,7 +1946,7 @@ Although the whiteout prefix is essentially `\*[AUFS_WH_PFX]', to
 support rmdir(2) and
 rename(2) (when the target directory already existed), the namelen is
 decreased more since the name will be renamed to
-`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX]<dir>.<\*[AUFS_WH_TMP_LEN]-digits hex>'
+`\*[AUFS_WH_PFX]\*[AUFS_WH_PFX]<dir>.<\*[AUFS_WH_TMP_LEN]\-digits hex>'
 as previously described.
 And the block size may differ
 from st_blksize which is obtained by stat(2).
@@ -1721,12 +1987,12 @@ It means you may reach the limit of the number of file descriptor.
 And when the lower directory cannot be opened, aufs will close all the
 opened upper directories and return an error.
 
-The sub-mount under the branch
+The sub\-mount under the branch
 of local filesystem
 is ignored.
 For example, if you have mount another filesystem on
 /branch/another/mntpnt, the files under `mntpnt' will be ignored by aufs.
-It is recommended to mount the sub-mount under the mounted aufs.
+It is recommended to mount the sub\-mount under the mounted aufs.
 For example,
 
 .nf
@@ -1742,22 +2008,29 @@ There are several characters which are not allowed to use in a branch
 directory path and xino filename. See detail in Branch Syntax and Mount
 Option.
 
-The file-lock which means fcntl(2) with F_SETLK, F_SETLKW or F_GETLK, flock(2)
+The file\-lock which means fcntl(2) with F_SETLK, F_SETLKW or F_GETLK, flock(2)
 and lockf(3), is applied to virtual aufs file only, not to the file on a
 branch. It means you can break the lock by accessing a branch directly.
 TODO: check `security' to hook locks, as inotify does.
 
+Aufs respects all "security" hooks in kernel, so you can configure LSM
+for both of virtual aufs files and real branch\-fs files. But there is
+one exception, it is the kernel function "security_mmap_file()." The
+function called inside aufs for a branch\-fs file may cause a deadlock,
+so aufs stops calling it.
+LSM settings for the virtual aufs files works as usual.
+
 The I/O to the named pipe or local socket are not handled by aufs, even
 if it exists in aufs. After the reader and the writer established their
-connection if the pipe/socket are copied-up, they keep using the old one
-instead of the copied-up one.
+connection if the pipe/socket are copied\-up, they keep using the old one
+instead of the copied\-up one.
 
 The fsync(2) and fdatasync(2) systemcalls return 0 which means success, even
 if the given file descriptor is not opened for writing.
-I am afraid this behaviour may violate some standards. Checking the
-behaviour of fsync(2) on ext2, aufs decided to return success.
+I am afraid this behavior may violate some standards. Checking the
+behavior of fsync(2) on ext2, aufs decided to return success.
 
-If you want to use disk-quota, you should set it up to your writable
+If you want to use disk quota, you should set it up to your writable
 branch since aufs does not have its own block device.
 
 When your aufs is the root directory of your system, and your system
@@ -1774,8 +2047,8 @@ If your xino file is on a hard drive, you also need to specify
 directory.
 
 To rename(2) directory may return EXDEV even if both of src and tgt
-are on the same aufs. When the rename-src dir exists on multiple
-branches and the lower dir has child(ren), aufs has to copyup all his
+are on the same aufs. When the rename\-src dir exists on multiple
+branches and the lower dir has child/children, aufs has to copyup all his
 children. It can be recursive copyup. Current aufs does not support
 such huge copyup operation at one time in kernel space, instead
 produces a warning and returns EXDEV.
@@ -1784,7 +2057,45 @@ rename(2) or copy/unlink recursively. So the result is harmless.
 If your application which issues rename(2) for a directory does not
 support EXDEV, it will not work on aufs.
 Also this specification is applied to the case when the src directory
-exists on the lower readonly branch and it has child(ren).
+exists on the lower readonly branch and it has child/children.
+
+While it is rare, users can open a removed file with a little help
+from procfs.
+
+.RS
+.Bu
+open a file and get its descriptor
+.Bu
+remove the file
+.Bu
+generate a string `/proc/PID/fd/N'
+.Bu
+open the same file using the generated string
+.Bu
+.RE
+
+This operation is a little difficult for aufs since aufs allows the
+direct access to branches (by\-passing aufs), and it is hard to
+distinguish the case of this.
+
+.RS
+.Bu
+remove a file on a branch directly (by\-passing aufs)
+.Bu
+open the file via aufs
+.RE
+
+For the latter case, aufs detects the unmatching status between aufs
+cached info and the real info from the branch, and tries refreshing by
+re-lookup. Finally aufs finds
+the file is removed and let open(2) return an error.
+For the former case, currently (linux\-3.13\-rc7), aufs simply follows the
+behavior of ext2 which supports for opening a non\-directory but returns
+an error for a directory.
+Other than open(2), users may chmod(2) and chown(2) similarly (remove the
+file and then operate it via procfs). Ext2 supports them too, but aufs
+doesn't. I don't think it a big disadvantage since users can fchmod(2)
+and fchown(2) instead.
 
 If a sudden accident such like a power failure happens during aufs is
 performing, and regular fsck for branch filesystems is completed after
@@ -1796,7 +2107,7 @@ correctly.
 To check the consistency from the aufs' point of view, you can use a
 simple shell script called /sbin/auchk. Its purpose is a fsck tool for
 aufs, and it checks the illegal whiteout, the remained
-pseudo-links and the remained aufs-temp files. If they are found, the
+pseudo\-links and the remained aufs\-temp files. If they are found, the
 utility reports you and asks whether to delete or not.
 It is recommended to execute /sbin/auchk for every writable branch
 filesystem before mounting aufs if the system experienced crash.
@@ -1840,7 +2151,7 @@ different uid/gid/permission, /ro
 .\" And the next example shows the modifications to the files under /rw branch
 .\" will be copied-up to /new/a.
 .\"
-.\" Todo: test multiple writable branches policy. cpup=nearest, cpup=exist_parent.
+.\" TODO: test multiple writable branches policy. cpup=nearest, cpup=exist_parent.
 .\"
 .\" .nf
 .\" # mount -v -t aufs br:/rw:/ro none /u
@@ -1907,7 +2218,7 @@ originally. In aufs, it is very dangerous, particularly for
 whiteouts. Finally aufs sets the maximum link count for ramfs. The
 value is 32000 which is borrowed from ext2.
 
-After you prepend a branch which already has some entires, aufs may
+After you prepend a branch which already has some entries, aufs may
 report an I/O Error with "brabra should be negative" or something. For
 instance,
 you are going to open(2) a regular file in aufs and write(2) something
@@ -1922,11 +2233,11 @@ a regular file FOO exists in aufs.
 open the file FOO.
 .Bu
 add a branch which has FOO but it is a directory, and change the
-permssion of the old branch to RO.
+permission of the old branch to RO.
 .Bu
 write to the file FOO.
 .Bu
-aufs tries copying-up FOO to the upper writable branch which was
+aufs tries copying\-up FOO to the upper writable branch which was
 recently added.
 .Bu
 aufs finds a directory FOO on the upper branch, and returns an error.
@@ -1951,10 +2262,10 @@ an error when you try using FOO.
 .\" briefly describes the command or function's interface.  For  commands,  this
 .\" shows the syntax of the command and its arguments (including options); bold-
 .\" face is used for as-is text and italics are  used  to  indicate  replaceable
-.\" arguments. Brackets ([]) surround optional arguments, vertical bars (|) sep-
-.\" arate choices, and ellipses (...) can be repeated.  For functions, it  shows
-.\" any required data declarations or #include directives, followed by the func-
-.\" tion declaration.
+.\" arguments. Brackets ([]) surround optional arguments, vertical bars (|)
+.\" separate choices, and ellipses (...) can be repeated.  For functions, it  shows
+.\" any required data declarations or #include directives, followed by the
+.\" function declaration.
 .
 .\" DESCRIPTION
 .\" gives an explanation of what the command, function, or format does.  Discuss
@@ -1991,8 +2302,8 @@ an error when you try using FOO.
 .
 .\" SECURITY
 .\" discusses security issues and implications.  Warn  about  configurations  or
-.\" environments  that should be avoided, commands that may have security impli-
-.\" cations, and so on, especially if they aren't obvious.  Discussing  security
+.\" environments  that should be avoided, commands that may have security
+.\" implications, and so on, especially if they aren't obvious.  Discussing  security
 .\" in  a  separate section isn't necessary; if it's easier to understand, place
 .\" security information in the other sections (such as the DESCRIPTION or USAGE
 .\" section).  However, please include security information somewhere!
@@ -2008,7 +2319,7 @@ an error when you try using FOO.
 .\" activities.
 
 .SH COPYRIGHT
-Copyright \(co 2005\-2011 Junjiro R. Okajima
+Copyright \(co 2005\-2016 Junjiro R. Okajima
 
 .SH AUTHOR
 Junjiro R. Okajima

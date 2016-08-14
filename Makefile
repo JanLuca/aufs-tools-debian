@@ -1,5 +1,5 @@
 
-# Copyright (C) 2005-2011 Junjiro R. Okajima
+# Copyright (C) 2005-2015 Junjiro R. Okajima
 #
 # This program, aufs is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,47 +16,67 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301	 USA
 
 HOSTCC ?= cc
-CFLAGS += -I./libau
-CFLAGS += -O -Wall
+override CPPFLAGS += -D_GNU_SOURCE
+override CPPFLAGS += -I./libau
+override CPPFLAGS += -DAUFHSM_CMD=\"/usr/bin/aufhsm\"
+override CFLAGS += -O -Wall
+INSTALL ?= install
+Install = ${INSTALL} -o root -g root -p
+ManDir = /usr/share/man
 
-# MountCmdPath: dirty trick to support local nfs-mount.
-# - on a single host, mount aufs, export it via nfs, and mount it again
-#   via nfs locally.
-# in this situation, a deadlock MAY happen between the aufs branch
-# management and nfsd.
-# - mount.aufs enters the pseudo-link maintenance mode which prohibits
-#   all processes acess to the aufs mount except its children.
-# - mount.aufs calls execvp(3) to execute mount(8).
-# - then nfsd MAY searches mount(8) under the nfs-mounted aufs which is
-#   already prohibited.
-# the search behaviour is highly depending upon the system environment,
-# but if we specify the path of mount(8) we can keep it from the
-# deadlock.
+#
+# MountCmd: full path for mount(8)
+# UmountCmd: full path for umount(8)
+#
+MountCmd=/bin/mount
+UmountCmd=/bin/umount
+override CPPFLAGS += -DMOUNT_CMD=\"${MountCmd}\"
+override CPPFLAGS += -DUMOUNT_CMD=\"${UmountCmd}\"
 
-ifdef MountCmdPath
-override CPPFLAGS += -DMOUNT_CMD_PATH=\"${MountCmdPath}/\"
+#
+# BuildFHSM: specify building FHSM tools
+#
+BuildFHSM = no
+ifeq (${BuildFHSM},yes)
+override CPPFLAGS += -DAUFHSM
+LibUtilObj = mng_fhsm.o
+define MakeFHSM
+	${MAKE} -C fhsm ${1}
+endef
 else
-override CPPFLAGS += -DMOUNT_CMD_PATH=\"\"
+define MakeFHSM
+	# empty
+endef
 endif
 
 Cmd = aubusy auchk aubrsync
 Man = aufs.5
 Etc = etc_default_aufs
-Bin = auibusy auplink mount.aufs umount.aufs #auctl
+Bin = auibusy aumvdown auplink mount.aufs umount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
 LibUtil = libautil.a
-LibUtilObj = proc_mnt.o br.o plink.o mtab.o
+LibUtilObj += perror.o proc_mnt.o br.o plink.o mtab.o
 LibUtilHdr = au_util.h
-export
+
+# suppress 'eval' for ${v}
+$(foreach v, CPPFLAGS CFLAGS INSTALL Install ManDir LibUtilHdr, \
+	$(eval MAKE += ${v}="$${${v}}"))
 
 all: ver_test ${Man} ${Bin} ${Etc}
 	${MAKE} -C libau $@
 	ln -sf ./libau/libau*.so .
+	$(call MakeFHSM, $@)
+
+clean:
+	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} libau.so* *~
+	${RM} ${BinObj} ${LibUtilObj}
+	${MAKE} -C libau $@
+	$(call MakeFHSM, $@)
 
 ver_test: ver
 	./ver
 
-${Bin}: LDFLAGS += -static -s
+${Bin}: override LDFLAGS += -static -s
 ${Bin}: LDLIBS = -L. -lautil
 ${BinObj}: %.o: %.c ${LibUtilHdr} ${LibUtil}
 
@@ -87,32 +107,29 @@ aufs.5: aufs.in.5 c2tmac
 c2sh c2tmac ver: CC = ${HOSTCC}
 .INTERMEDIATE: c2sh c2tmac ver
 
-Install = install -o root -g root -p
-install_sbin: File = auibusy auplink mount.aufs umount.aufs
+install_sbin: File = auibusy aumvdown auplink mount.aufs umount.aufs
 install_sbin: Tgt = ${DESTDIR}/sbin
 install_ubin: File = aubusy auchk aubrsync #auctl
 install_ubin: Tgt = ${DESTDIR}/usr/bin
 install_sbin install_ubin: ${File}
-	install -d ${Tgt}
+	${INSTALL} -d ${Tgt}
 	${Install} -m 755 ${File} ${Tgt}
 install_etc: File = etc_default_aufs
 install_etc: Tgt = ${DESTDIR}/etc/default/aufs
 install_etc: ${File}
-	install -d $(dir ${Tgt})
+	${INSTALL} -d $(dir ${Tgt})
 	${Install} -m 644 -T ${File} ${Tgt}
-install_man: File = aufs.5
-install_man: Tgt = ${DESTDIR}/usr/share/man/man5
-install_man: ${File}
-	install -d ${Tgt}
+install_man5: File = aufs.5
+install_man5: Tgt = ${DESTDIR}${ManDir}/man5
+install_man8: File = aumvdown.8
+install_man8: Tgt = ${DESTDIR}${ManDir}/man8
+install_man5 install_man8: ${File}
+	${INSTALL} -d ${Tgt}
 	${Install} -m 644 ${File} ${Tgt}
-install_ulib:
-	${MAKE} -C libau $@
+install_man: install_man5 install_man8
 
-install: install_man install_sbin install_ubin install_etc install_ulib
-
-clean:
-	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} libau.so* *~
-	${RM} ${BinObj} ${LibUtilObj}
+install: install_man install_sbin install_ubin install_etc
 	${MAKE} -C libau $@
+	$(call MakeFHSM, $@)
 
 -include priv.mk
