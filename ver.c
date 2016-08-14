@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Junjiro R. Okajima
+ * Copyright (C) 2011-2015 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 int main(int argc, char *argv[])
 {
 	regex_t preg;
-	const char *pat = "^3\\.([2-9]|2\\.x|[1-9][0-9][0-9]*)($|-)";
+	const char *pat = "^4\\.[0-9][0-9]?";
 
 	if (regcomp(&preg, pat, REG_EXTENDED | REG_NOSUB))
 		AuFin("regcomp");
@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 		return 0;
 
 	puts("Wrong version!\n"
-	     AuVersion ", but aufs is " AUFS_VERSION ".");
+	     AuVersion ", but aufs is " AUFS_VERSION ".\n"
+	     "See README in detail and try git branch -a.");
 	return -1;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2011 Junjiro R. Okajima
+ * Copyright (C) 2005-2015 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
 
 #define _FILE_OFFSET_BITS	64	/* ftw.h */
 #define _XOPEN_SOURCE		500	/* ftw.h */
-#define _GNU_SOURCE			/* ftw.h */
 
 #include <sys/ioctl.h>
 #include <sys/resource.h>
@@ -237,7 +236,7 @@ static void au_plink_maint(char *si, int close_on_exec, int *fd)
 
 void au_clean_plink(void)
 {
-	ssize_t ssz;
+	ssize_t ssz __attribute__((unused));
 
 	ssz = write(proc_fd, "clean", 5);
 #ifndef DEBUG
@@ -246,7 +245,7 @@ void au_clean_plink(void)
 #endif
 }
 
-static int do_plink(char *cwd, int cmd, int nbr, char *br[])
+static int do_plink(char *cwd, int cmd, int nbr, union aufs_brinfo *brinfo)
 {
 	int err, i, l;
 	struct rlimit rlim;
@@ -270,17 +269,14 @@ static int do_plink(char *cwd, int cmd, int nbr, char *br[])
 	}
 
 	for (i = 0; i < nbr; i++) {
-		//puts(br[i]);
-		p = strchr(br[i], '=');
-		if (strncmp(p + 1, AUFS_BRPERM_RW, sizeof(AUFS_BRPERM_RW) - 1))
+		if (!au_br_writable(brinfo[i].perm))
 			continue;
 
-		*p = 0;
-		l = strlen(br[i]);
+		l = strlen(brinfo[i].path);
 		p = malloc(l + sizeof(AUFS_WH_PLINKDIR) + 2);
 		if (!p)
 			AuFin("malloc");
-		sprintf(p, "%s/%s", br[i], AUFS_WH_PLINKDIR);
+		sprintf(p, "%s/%s", brinfo[i].path, AUFS_WH_PLINKDIR);
 		//puts(p);
 		err = build_array(p);
 		if (err)
@@ -327,7 +323,8 @@ int au_plink(char cwd[], int cmd, unsigned int flags, int *fd)
 {
 	int err, nbr;
 	struct mntent ent;
-	char **br, *p, si[3 + sizeof(unsigned long long) * 2 + 1];
+	char *p, si[3 + sizeof(unsigned long long) * 2 + 1];
+	union aufs_brinfo *brinfo;
 
 	err = au_proc_getmntent(cwd, &ent);
 	if (err)
@@ -351,19 +348,14 @@ int au_plink(char cwd[], int cmd, unsigned int flags, int *fd)
 			AuFin("no such mount point");
 	}
 
-#ifdef DEBUG
-	//char a[] = "a,b,br:/tmp/br0=rw:/br1=ro";
-	char a[] = "a,b,si=1,c";
-	ent.mnt_opts = a;
-#endif
-	err = au_br(&br, &nbr, &ent);
-	//printf("nbr %d\n", nbr);
+	err = au_br(&brinfo, &nbr, cwd);
 	if (err)
 		AuFin(NULL);
 
-	err = do_plink(cwd, cmd, nbr, br);
+	err = do_plink(cwd, cmd, nbr, brinfo);
 	if (err)
 		AuFin(NULL);
+	free(brinfo);
 
 	if (flags & AuPlinkFlag_CLOSE)
 		au_plink_maint(NULL, 0, fd);

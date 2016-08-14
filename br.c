@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2011 Junjiro R. Okajima
+ * Copyright (C) 2005-2015 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define _GNU_SOURCE /* strndup */
-
+#include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
 #include <sys/types.h>
-#include <mntent.h>
-#include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -29,144 +28,78 @@
 #include <linux/aufs_type.h>
 #include "au_util.h"
 
-static int by_opts(char ***br, int *nbr, char *bropt)
+int au_br(union aufs_brinfo **brinfo, int *nbr, char *root)
 {
-	char *p, **a;
-	int l;
+	int err, fd;
+	struct statfs stfs;
 
-	/* bropts is placed at the end of mnt_opts */
-	errno = EINVAL;
-	//puts(bropt);
-	if (strchr(bropt, ','))
-		AuFin("%s", bropt);
+	fd = open(root, O_RDONLY /* | O_PATH */);
+	if (fd < 0)
+		AuFin("%s", root);
 
-	l = strlen(bropt);
-	p = malloc(l + 2);
-	if (!p)
-		AuFin("malloc");
-	memcpy(p, bropt, l + 1);
-	bropt = p;
-	bropt[l + 1] = 0; /* end marker */
+	err = fstatfs(fd, &stfs);
+	if (err)
+		AuFin("internal error, %s", root);
+	if (stfs.f_type != AUFS_SUPER_MAGIC)
+		AuFin("%s is not aufs", root);
 
-	*nbr = 1;
-	while (1) {
-		p = strchr(p + 1, ':');
-		if (!p)
-			break;
-		*p = 0;
-		(*nbr)++;
-	}
+	*nbr = ioctl(fd, AUFS_CTL_BRINFO, NULL);
+	if (*nbr <= 0)
+		AuFin("internal error, %s", root);
 
-	a = malloc(sizeof(a) * (*nbr + 1));
-	if (!a)
-		AuFin("malloc");
+	errno = posix_memalign((void **)brinfo, 4096, *nbr * sizeof(**brinfo));
+	if (errno)
+		AuFin("posix_memalign");
 
-	*br = a;
-	*a++ = bropt;
-	p = bropt;
-	while (*p) {
-		p += strlen(p) + 1;
-		*a++ = p;
-	}
-	*--a = NULL;
-	/* don't free bropt */
+	err = ioctl(fd, AUFS_CTL_BRINFO, *brinfo);
+	if (err)
+		AuFin("AUFS_CTL_BRINFO");
+
+	err = close(fd);
+	if (err)
+		AuFin("internal error, %s", root);
 
 	return 0;
 }
 
-#ifdef DEBUG
-#define SiPathPrefix	"/tmp/aufs/si_"
-#define BufSiz		4
-#else
-#define SiPathPrefix	"/sys/fs/aufs/si_"
-#define BufSiz		BUFSIZ
+#ifdef AUFHSM
+int au_nfhsm(int nbr, union aufs_brinfo *brinfo)
+{
+	int nfhsm, i;
+
+	nfhsm = 0;
+	for (i = 0; i < nbr; i++)
+		if (au_br_fhsm(brinfo[i].perm))
+			nfhsm++;
+
+	return nfhsm;
+}
+
+int au_br_qsort_path(const void *_a, const void *_b)
+{
+	const union aufs_brinfo *a = _a, *b = _b;
+
+	return strcmp(a->path, b->path);
+}
+
+void au_br_sort_path(int nbr, union aufs_brinfo *brinfo)
+{
+	qsort(brinfo, nbr, sizeof(*brinfo), au_br_qsort_path);
+}
+
+int au_br_bsearch_path(const void *_path, const void *_brinfo)
+{
+	char *path = (char *)_path;
+	const union aufs_brinfo *brinfo = _brinfo;
+
+	return strcmp(path, brinfo->path);
+}
+
+union aufs_brinfo *au_br_search_path(char *path, int nbr,
+				     union aufs_brinfo *brinfo)
+{
+	return bsearch((void *)path, brinfo, nbr, sizeof(*brinfo),
+		       au_br_bsearch_path);
+}
+
 #endif
-
-static int by_sysfs(char ***br, int *nbr, char *siopt)
-{
-	int err, i, l, sz;
-	char buf[BufSiz], path[] = SiPathPrefix "1234567890123456/br32767";
-	char *p, *end, **a, *q;
-	FILE *fp;
-
-	errno = EINVAL;
-	end = strchr(siopt, ',');
-	if (end)
-		i = end - siopt;
-	else
-		i = strlen(siopt);
-
-	strncpy(path + sizeof(SiPathPrefix) - 1, siopt, i);
-	p = path + sizeof(SiPathPrefix) - 1 + i;
-	strcpy(p, "/br");
-	p += 3; /* "/br" */
-	*nbr = 0;
-	err = 0;
-	while (!err) {
-		sprintf(p, "%d", (*nbr)++);
-		err = access(path, F_OK);
-	}
-
-	a = malloc(sizeof(*br) * *nbr);
-	if (!a)
-		AuFin("malloc");
-
-	(*nbr)--;
-	*br = a;
-	for (i = 0; i < *nbr; i++) {
-		sprintf(p, "%d", i);
-		fp = fopen(path, "r");
-		if (!fp)
-			AuFin("%s", path);
-		if (fgets(buf, sizeof(buf), fp) != buf)
-			AuFin("%s", path);
-		l = strlen(buf);
-		if (l < 1)
-			AuFin("internal error, %d", l);
-
-		q = strndup(buf, l - 1);
-		if (buf[l - 1] != '\n') {
-			/* a branch path with crazy length */
-			/* stat(2) for sysfs is meaningless */
-			sz = sizeof(buf);
-			do {
-				free(q);
-				sz <<= 1;
-				q = malloc(sz);
-				if (!q)
-					AuFin("malloc");
-				rewind(fp);
-				if (fgets(q, sz, fp) != q)
-					AuFin("%s", path);
-				l = strlen(q);
-			} while (q[l - 1] != '\n');
-			q[l - 1] = 0;
-		}
-
-		*a++ = q;
-		/* don't free q */
-		fclose(fp); /* ignore */
-	}
-	*a = NULL;
-
-	return 0;
-}
-
-#define BrOpt	",br:"
-#define SiOpt	"si"
-int au_br(char ***br, int *nbr, struct mntent *ent)
-{
-	char *p;
-
-	*nbr = 0;
-	p = strstr(ent->mnt_opts, BrOpt);
-	if (p)
-		return by_opts(br, nbr, p + sizeof(BrOpt) - 1);
-	p = hasmntopt(ent, SiOpt);
-	if (p)
-		return by_sysfs(br, nbr, p + sizeof(SiOpt));
-
-	/* broken opts */
-	AuFin("internal error, %s", ent->mnt_opts);
-	return -1; /* never reach here */
-}

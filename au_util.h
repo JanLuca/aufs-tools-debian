@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2013 Junjiro R. Okajima
+ * Copyright (C) 2005-2015 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,19 @@
 #define __AUFS_UTIL_H__
 
 #include <errno.h>
-#include <error.h>
 
-#define AuVersion "aufs-util for aufs3.2 and later"
+#ifdef __GNU_LIBRARY__
+#include <error.h>
+#endif
+
+#define AuRelease	"20160321"
+#ifdef AUFHSM
+#define AuFhsmStr " with FHSM"
+#else
+#define AuFhsmStr ""
+#endif
+#define AuVersionGitBranch "aufs3.x-rcN"
+#define AuVersion "aufs-util for " AuVersionGitBranch AuFhsmStr " " AuRelease
 
 /*
  * error_at_line() is decleared with (__printf__, 5, 6) attribute,
@@ -38,12 +48,31 @@
 #define MTab "/etc/mtab"
 #endif
 
+/* perror.c */
+extern int au_errno;
+extern const char *au_errlist[];
+void au_perror(const char *s);
+#ifndef __GNU_LIBRARY__
+/* musl libc has 'program_invocation_name', but doesn't have error_at_line() */
+void error_at_line(int status, int errnum, const char *filename,
+		   unsigned int linenum, const char *format, ...)
+#endif
+
 /* proc_mounts.c */
 struct mntent;
 int au_proc_getmntent(char *mntpnt, struct mntent *rent);
 
 /* br.c */
-int au_br(char ***br, int *nbr, struct mntent *ent);
+union aufs_brinfo;
+int au_br(union aufs_brinfo **brinfo, int *nbr, char *root);
+#ifdef AUFHSM
+int au_nfhsm(int nbr, union aufs_brinfo *brinfo);
+int au_br_qsort_path(const void *_a, const void *_b);
+void au_br_sort_path(int nbr, union aufs_brinfo *brinfo);
+int au_br_bsearch_path(const void *_path, const void *_brinfo);
+union aufs_brinfo *au_br_search_path(char *path, int nbr,
+				     union aufs_brinfo *brinfo);
+#endif
 
 /* plink.c */
 enum {
@@ -59,6 +88,16 @@ int au_plink(char cwd[], int cmd, unsigned int flags, int *fd);
 /* mtab.c */
 void au_print_ent(struct mntent *ent);
 int au_update_mtab(char *mntpnt, int do_remount, int do_verbose);
+
+/* fhsm/fhsm.c */
+#ifdef AUFHSM
+void mng_fhsm(char *cwd, int unmount);
+#else
+static inline void mng_fhsm(char *cwd, int unmount)
+{
+	/* empty */
+}
+#endif
 
 #define _Dpri(fmt, ...)		printf("%s:%d:" fmt, \
 				       __func__, __LINE__, ##__VA_ARGS__)
