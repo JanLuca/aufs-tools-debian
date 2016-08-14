@@ -2,10 +2,12 @@ Source: aufs-tools
 Section: kernel
 Priority: optional
 Maintainer: Filesystems Group <filesystems-devel@lists.alioth.debian.org>
-Uploaders: Luk Claes <luk@debian.org>
+Uploaders: Jan Luca Naumann <j.naumann@fu-berlin.de>
 Build-Depends: debhelper (>= 9), linux-libc-dev, aufs4-headers
-Standards-Version: 3.9.4
+Standards-Version: 3.9.8
 Homepage: http://aufs.sourceforge.net/
+Vcs-Browser: https://github.com/JanLuca/aufs-tools-debian
+Vcs-Git: https://github.com/JanLuca/aufs-tools-debian.git
 
 Package: aufs-tools
 Architecture: linux-any
