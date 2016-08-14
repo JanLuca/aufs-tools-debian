@@ -19,17 +19,3 @@ Description: Tools to manage aufs filesystems
  of the source directories.
  .
  This package contains utilities needed to configure aufs containers on-the-fly.
-
-Package: aufs-tools-dbg
-Section: debug
-Priority: extra
-Architecture: linux-any
-Depends: ${misc:Depends}, aufs-tools (= ${binary:Version})
-Description: Tools to manage aufs filesystems (debug)
- The aufs driver provides a unification file system for the Linux kernel. It
- allows one to virtually merge the contents of several directories and/or stack
- them, so that apparent file changes in the aufs end in file changes in only one
- of the source directories.
- .
- This package contains the debugging symbols for the utilities needed to
- configure aufs containers on-the-fly.
