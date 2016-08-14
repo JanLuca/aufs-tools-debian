@@ -3,10 +3,9 @@ Description:
  Correcting example syntax, thanks to Dan Greene <dan-greene@wi.rr.com>
  (Closes: #700111).
 
-diff -Naurp aufs-tools.orig/aufs.in.5 aufs-tools/aufs.in.5
---- aufs-tools.orig/aufs.in.5
-+++ aufs-tools/aufs.in.5
-@@ -1769,7 +1769,7 @@ shows how the options are handled. (assu
+--- a/aufs.in.5
++++ b/aufs.in.5
+@@ -2121,7 +2121,7 @@
  installed)
  
  .nf
@@ -15,7 +14,7 @@ diff -Naurp aufs-tools.orig/aufs.in.5 aufs-tools/aufs.in.5
  none on /u type aufs (rw,xino=/day0/.aufs.xino,br:/day0=rw:/base=ro)
  # mount -v -o remount,\\
  	prepend:/day1,\\
-@@ -1781,7 +1781,7 @@ none on /u type aufs (rw,xino=/day1/xino
+@@ -2133,7 +2133,7 @@
  .fi
  
  .nf

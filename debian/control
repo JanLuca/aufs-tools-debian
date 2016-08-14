@@ -3,7 +3,7 @@ Section: kernel
 Priority: optional
 Maintainer: Filesystems Group <filesystems-devel@lists.alioth.debian.org>
 Uploaders: Luk Claes <luk@debian.org>
-Build-Depends: debhelper (>= 9), linux-libc-dev
+Build-Depends: debhelper (>= 9), linux-libc-dev, aufs4-headers
 Standards-Version: 3.9.4
 Homepage: http://aufs.sourceforge.net/
 
