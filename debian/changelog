@@ -1,4 +1,10 @@
-aufs-tools (1:4.0+20160321-1) unstable; urgency=medium
+aufs-tools (1:4.0+20160822-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Jan Luca Naumann <j.naumann@fu-berlin.de>  Fri, 26 Aug 2016 18:23:00 +0200
+
+aufs-tools (1:4.0+20160321-1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * New maintainer. (Closes: #723594)
