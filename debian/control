@@ -11,7 +11,7 @@ Vcs-Git: https://github.com/JanLuca/aufs-tools-debian.git
 
 Package: aufs-tools
 Architecture: linux-any
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: aufs4-dkms, ${misc:Depends}, ${shlibs:Depends}
 Description: Tools to manage aufs filesystems
  The aufs driver provides a unification file system for the Linux kernel. It
  allows one to virtually merge the contents of several directories and/or stack
