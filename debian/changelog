@@ -1,6 +1,7 @@
 aufs-tools (1:4.0+20160822-1) unstable; urgency=medium
 
   * New upstream release.
+  * Enable hardening options for the package.
 
  -- Jan Luca Naumann <j.naumann@fu-berlin.de>  Fri, 26 Aug 2016 18:23:00 +0200
 
