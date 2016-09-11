@@ -7,4 +7,4 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 	dh ${@}
 
 override_dh_strip:
-	dh_strip --dbgsym-migration='4.0+20160321-1'
+	dh_strip --dbgsym-migration='aufs-tools-dbg (<< 1:4.0+20160822-1)'
