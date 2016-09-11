@@ -1,0 +1,21 @@
+Description: Change order of build flags to ensure --shared is last one
+ This patch fixes a problem when the hardening options are enabled:
+ The hardening build options add to LDFLAGS the build flag "-pie" which
+ overwrite the "--shared" flag. The patch changes the order of the
+ build flags so the shared-flag overwrites any flag in LDFLAGS.
+Author: Jan Luca Naumann <j.naumann@fu-berlin.de>
+Forwarded: not-needed
+Last-Update: 2016-09-11
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/libau/Makefile
++++ b/libau/Makefile
+@@ -40,7 +40,7 @@
+ ${LibSo}.${LibSoMajor}.${LibSoMinor}: override LDFLAGS += -s
+ ${LibSo}.${LibSoMajor}.${LibSoMinor}: override LDLIBS += -ldl -lpthread
+ ${LibSo}.${LibSoMajor}.${LibSoMinor}: ${LibSoObj}
+-	${CC} --shared -Wl,-soname,${LibSo}.${LibSoMajor} ${LDFLAGS} \
++	${CC} -Wl,-soname,${LibSo}.${LibSoMajor} ${LDFLAGS} --shared \
+ 		-o $@ $^ ${LDLIBS}
+ 
+ install_ulib: File = ${LibSo}.${LibSoMajor}.${LibSoMinor}
