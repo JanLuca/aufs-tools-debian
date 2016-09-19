@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2015 Junjiro R. Okajima
+ * Copyright (C) 2005-2016 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #define _BSD_SOURCE		/* dirfd */
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <dirent.h>
 #include <mntent.h>
 #include <regex.h>
@@ -32,7 +33,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <wait.h>
 
 #include <linux/aufs_type.h>
 #include "au_util.h"
@@ -89,8 +89,13 @@ static int test_flush(char opts[])
 
 	/* todo: try getsubopt(3)? */
 	err = regcomp(&preg, pat, REG_EXTENDED | REG_NOSUB);
-	if (err)
-		AuFin("regcomp");
+	if (err) {
+		size_t sz;
+		char a[128];
+
+		sz = regerror(err, &preg, a, sizeof(a));
+		AuFin("regcomp: %.*s", (int)sz, a);
+	}
 
 	p = o;
 	while (i--) {

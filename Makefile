@@ -1,5 +1,5 @@
 
-# Copyright (C) 2005-2015 Junjiro R. Okajima
+# Copyright (C) 2005-2016 Junjiro R. Okajima
 #
 # This program, aufs is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,22 +49,61 @@ define MakeFHSM
 endef
 endif
 
+LibUtil = libautil.a
+LibUtilObj += perror.o proc_mnt.o br.o plink.o mtab.o
+LibUtilHdr = au_util.h
+
+TopDir = ${CURDIR}
+# don't use -q for fgrep here since it exits when the string is found,
+# and it causes the broken pipe error.
+define test_glibc
+	$(shell ${1} ${CPPFLAGS} -I ${TopDir}/extlib/non-glibc -E -P -dM ${2} |\
+		fgrep -w __GNU_LIBRARY__ > /dev/null && \
+		echo yes || \
+		echo no)
+endef
+$(eval Glibc=$(call test_glibc, ${CC}, ver.c))
+#$(warning Glibc=${Glibc})
+
+ifneq (${CC},${HOSTCC})
+	ifeq (${LibAuDir},)
+$(warning Warning: CC is set, but LibAuDir.)
+		LibAuDir = $(shell ldconfig -p | \
+			fgrep libc. | \
+			head -n 1 | \
+			cut -f2 -d'>' | \
+			xargs -r dirname)
+		ifeq (${LibAuDir},)
+			LibAuDir = /usr/lib
+		endif
+	endif
+endif
+
+ExtlibPath = extlib/glibc
+ExtlibObj = au_nftw.o
+ifeq (${Glibc},no)
+ExtlibPath = extlib/non-glibc
+ExtlibObj += au_decode_mntpnt.o error_at_line.o
+LibUtilHdr += ${ExtlibPath}/error_at_line.h
+override CPPFLAGS += -I${CURDIR}/${ExtlibPath}
+endif
+LibUtilObj += ${ExtlibObj}
+
 Cmd = aubusy auchk aubrsync
 Man = aufs.5
 Etc = etc_default_aufs
 Bin = auibusy aumvdown auplink mount.aufs umount.aufs #auctl
 BinObj = $(addsuffix .o, ${Bin})
-LibUtil = libautil.a
-LibUtilObj += perror.o proc_mnt.o br.o plink.o mtab.o
-LibUtilHdr = au_util.h
 
-ifeq (${NoLibcFTW},yes)
-override CPPFLAGS += -DNO_LIBC_FTW
+ifeq (${Glibc},no)
+AuplinkFtwCmd=/sbin/auplink_ftw
+override CPPFLAGS += -DAUPLINK_FTW_CMD=\"${AuplinkFtwCmd}\"
 Cmd += auplink_ftw
 endif
 
 # suppress 'eval' for ${v}
-$(foreach v, CPPFLAGS CFLAGS INSTALL Install ManDir LibUtilHdr, \
+$(foreach v, CC CPPFLAGS CFLAGS INSTALL Install ManDir TopDir LibUtilHdr \
+	Glibc LibAuDir ExtlibPath, \
 	$(eval MAKE += ${v}="$${${v}}"))
 
 all: ver_test ${Man} ${Bin} ${Etc}
@@ -75,6 +114,9 @@ all: ver_test ${Man} ${Bin} ${Etc}
 clean:
 	${RM} ${Man} ${Bin} ${Etc} ${LibUtil} libau.so* *~
 	${RM} ${BinObj} ${LibUtilObj}
+	for i in ${ExtlibSrc}; \
+	do test -L $${i} && ${RM} $${i} || :; \
+	done
 	${MAKE} -C libau $@
 	$(call MakeFHSM, $@)
 
@@ -89,6 +131,11 @@ ${LibUtilObj}: %.o: %.c ${LibUtilHdr}
 #${LibUtil}: ${LibUtil}(${LibUtilObj})
 ${LibUtil}: $(foreach o, ${LibUtilObj}, ${LibUtil}(${o}))
 .NOTPARALLEL: ${LibUtil}
+ExtlibSrc = $(patsubst %.o,%.c, ${ExtlibObj})
+${ExtlibSrc}: %: ${ExtlibPath}/%
+	ln -sf $< $@
+.INTERMEDIATE: ${ExtlibSrc}
+${ExtlibObj}: CPPFLAGS += -I${CURDIR}
 
 etc_default_aufs: c2sh aufs.shlib
 	${RM} $@
@@ -113,7 +160,7 @@ c2sh c2tmac ver: CC = ${HOSTCC}
 .INTERMEDIATE: c2sh c2tmac ver
 
 install_sbin: File = auibusy aumvdown auplink mount.aufs umount.aufs
-ifeq (${NoLibcFTW},yes)
+ifeq (${Glibc},no)
 install_sbin: File += auplink_ftw
 endif
 install_sbin: Tgt = ${DESTDIR}/sbin
@@ -136,8 +183,10 @@ install_man5 install_man8: ${File}
 	${Install} -m 644 ${File} ${Tgt}
 install_man: install_man5 install_man8
 
-install: install_man install_sbin install_ubin install_etc
+install_ulib:
 	${MAKE} -C libau $@
+
+install: install_man install_sbin install_ubin install_etc install_ulib
 	$(call MakeFHSM, $@)
 
 -include priv.mk
