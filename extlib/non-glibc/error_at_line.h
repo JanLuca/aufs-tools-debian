@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Junjiro R. Okajima
+ * Copyright (C) 2013-2016 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,28 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <linux/aufs_type.h>
-#undef NDEBUG
-#include <assert.h>
-#include <regex.h>
-#include <stdio.h>
-#include <string.h>
-#include "au_util.h"
+#ifndef __ERROR_AT_LINE_H__
+#define __ERROR_AT_LINE_H__
 
-int main(int argc, char *argv[])
-{
-	int err;
-	regex_t preg;
-	const char *pat = "^4\\.[1-9][0-9]?"; /* aufs4.1 and later */
+#ifdef __GNU_LIBRARY__
+#error this is for non-glibc.
+#else
+void error_at_line(int status, int errnum, const char *filename,
+		   unsigned int linenum, const char *format, ...);
+#endif
 
-	err = regcomp(&preg, pat, REG_EXTENDED | REG_NOSUB);
-	assert(!err); /* internal error */
-
-	if (!regexec(&preg, AUFS_VERSION, 0, NULL, 0))
-		return 0;
-
-	puts("Wrong version!\n"
-	     AuVersion ", but aufs is " AUFS_VERSION ".\n"
-	     "See README in detail and try git branch -a.");
-	return -1;
-}
+#endif /* __ERROR_AT_LINE_H__ */
