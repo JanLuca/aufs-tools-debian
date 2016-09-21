@@ -3,7 +3,7 @@ Section: kernel
 Priority: optional
 Maintainer: Filesystems Group <filesystems-devel@lists.alioth.debian.org>
 Uploaders: Jan Luca Naumann <j.naumann@fu-berlin.de>
-Build-Depends: debhelper (>= 9), linux-libc-dev, aufs4-headers
+Build-Depends: debhelper (>= 9), linux-libc-dev, aufs-dev
 Standards-Version: 3.9.8
 Homepage: http://aufs.sourceforge.net/
 Vcs-Browser: https://github.com/JanLuca/aufs-tools-debian
@@ -11,11 +11,11 @@ Vcs-Git: https://github.com/JanLuca/aufs-tools-debian.git
 
 Package: aufs-tools
 Architecture: linux-any
-Depends: aufs4-dkms, ${misc:Depends}, ${shlibs:Depends}
+Depends: aufs-dkms, ${misc:Depends}, ${shlibs:Depends}
 Description: Tools to manage aufs filesystems
- The aufs driver provides a unification file system for the Linux kernel. It
- allows one to virtually merge the contents of several directories and/or stack
- them, so that apparent file changes in the aufs end in file changes in only one
+ The aufs driver provides a union mount for Linux filesystems. It allows one
+ to virtually merge the contents of several directories and/or stack them, so
+ that file changes in the aufs union mount end up as changes in only one
  of the source directories.
  .
  This package contains utilities needed to configure aufs containers on-the-fly.

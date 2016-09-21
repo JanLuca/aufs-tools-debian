@@ -2,6 +2,8 @@ aufs-tools (1:4.1+20160919-1) unstable; urgency=medium
 
   * New upstream release.
     - Fix auplink crashing on non-aufs mount points. (Closes: #777559)
+  * Rename build-dependency "aufs4-headers" to "aufs-dev".
+  * Rename dependency "aufs4-dkms" to "aufs-dkms".
 
  -- Jan Luca Naumann <j.naumann@fu-berlin.de>  Mon, 19 Sep 2016 17:48:52 +0200
 
