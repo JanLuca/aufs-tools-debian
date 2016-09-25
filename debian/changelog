@@ -1,3 +1,10 @@
+aufs-tools (1:4.1+20160919-2) unstable; urgency=medium
+
+  * debian/control:
+    - Move aufs-dkms from Depends to Recommends. (Closes: #838632)
+
+ -- Jan Luca Naumann <j.naumann@fu-berlin.de>  Sun, 25 Sep 2016 20:44:43 +0200
+
 aufs-tools (1:4.1+20160919-1) unstable; urgency=medium
 
   * New upstream release.

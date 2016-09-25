@@ -11,7 +11,8 @@ Vcs-Git: https://github.com/JanLuca/aufs-tools-debian.git
 
 Package: aufs-tools
 Architecture: linux-any
-Depends: aufs-dkms, ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Recommends: aufs-dkms
 Description: Tools to manage aufs filesystems
  The aufs driver provides a union mount for Linux filesystems. It allows one
  to virtually merge the contents of several directories and/or stack them, so
