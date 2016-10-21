@@ -66,10 +66,9 @@ Makefile in this tree has some customizable make-variables.
 
 - LibAuDir
   specify the directory path to install the shared object library
-  libau.so. The default is taken from the output of ldconfig -p. If it
-  fails, then set to /usr/lib.
-  This make variable will be useful for the system who have both of
-  glibc and musl-libc.
+  libau.so. The default is /usr/lib.
+  This make variable will be useful for the system who has both of
+  glibc and musl-libc, or the system who has x86_64 and i686 libraries.
 
 - MountCmd, UmountCmd
   specify mount(8) and umount(8) in full path.  By default, they are
