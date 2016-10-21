@@ -1,3 +1,9 @@
+aufs-tools (1:4.1+20161010-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Jan Luca Naumann <j.naumann@fu-berlin.de>  Fri, 21 Oct 2016 10:51:13 +0200
+
 aufs-tools (1:4.1+20160919-2) unstable; urgency=medium
 
   * debian/control:
