@@ -9,5 +9,8 @@ export LibAuDir = /usr/lib
 %:
 	dh ${@}
 
+override_dh_auto_clean:
+	dh_auto_clean -- clean
+
 override_dh_strip:
 	dh_strip --dbgsym-migration='aufs-tools-dbg (<< 1:4.0+20160822-1)'
