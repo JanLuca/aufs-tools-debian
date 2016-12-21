@@ -1657,6 +1657,18 @@ The policy for this copyup is always `bottom\-up.'
 This is the default policy.
 .
 .TP
+.B create=tdmfs:low[:second]
+Select the highest writable branch regardless the existence of the
+parent dir. If the free space of this branch is less than `low' bytes,
+then the next hightest writable branch will be selected.
+If the free space of all writable branches are less than `low' bytes,
+then create=mfs policy is applied.
+For the duration (`second') parameter, see create=mfs[:second] below.
+
+FHSM (File\-based Hierarchy Storage Management) may bring you the very
+similar result, and is more flexible than this policy.
+.
+.TP
 .B create=rr | round\-robin
 Selects a writable branch in round robin. When you have two writable
 branches and creates 10 new files, 5 files will be created for each
