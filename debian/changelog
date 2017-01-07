@@ -1,3 +1,13 @@
+aufs-tools (1:4.1+20161219-1) unstable; urgency=medium
+
+  * New upstream release.
+
+  [ Helmut Grohne ]
+  * Fix FTCBFS: Pass triplet-prefixed CC via environment rather than make
+    command line. (Closes: #845724)
+
+ -- Jan Luca Naumann <j.naumann@fu-berlin.de>  Wed, 21 Dec 2016 17:42:23 +0100
+
 aufs-tools (1:4.1+20161010-1) unstable; urgency=medium
 
   * New upstream release.
