@@ -78,14 +78,14 @@ extern int (*Rdu_REAL_READDIR_R)(DIR *dir, struct Rdu_DIRENT *de, struct
 				 Rdu_DIRENT **rde);
 
 #ifdef Rdu64
-LibAuDlFunc(readdir64)
+LibAuDlFunc(readdir64);
 #ifdef _REENTRANT
 LibAuDlFunc(readdir64_r);
 #else
 #define libau_dl_readdir64_r()	1
 #endif
 #else /* Rdu64 */
-LibAuDlFunc(readdir)
+LibAuDlFunc(readdir);
 #ifdef _REENTRANT
 LibAuDlFunc(readdir_r);
 #else

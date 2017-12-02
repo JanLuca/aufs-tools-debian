@@ -429,6 +429,27 @@ fs prohibits it by its permission bits.
 
 This feature may invite a security risk similar to the world writable
 upper branch. As this case, dirperm1 option will produce a warning too.
+.
+.TP
+.B dirren
+.TQ
+.B nodirren
+Activates or disactivates the special handling for renaming a directory
+(DIRREN) feature.
+In order to use this feature, CONFIG_AUFS_DIRREN has to be enabled and
+`dirren' mount option has to be specified too.
+
+By default (nodirren), aufs returns an error with EXDEV for the case of
+rename(2) a directory which exists on the multiple branches. Note that
+DIRREN is slow (I have not yet measured it though) since it loads and
+saves the list of the inode\-numbers per branch and the detailed
+information per branch.
+
+Note that `udba=notify' option may not work with DIRREN, since it is
+based upon the name, while DIRREN handles both of before\- and
+after\-renamed names. The internal name comparision may not work
+correctly. In this case, aufs behaves like the default `udba=reval' is
+specified.
 
 
 .\" ----------------------------------------------------------------------
@@ -495,7 +516,7 @@ The default is `0' (disable).
 See linux/Documentation/ABI/*/{sys,debug}fs\-aufs.
 
 .\" ----------------------------------------------------------------------
-.SH For the better performance
+.SH Gain the performance in return for the features
 In order to gain a better performance, there are a few steps. They are
 essentially to drop the features from aufs, and to gain a performance in
 return for them. You don't have to drop all of them. It may be too
@@ -522,7 +543,8 @@ size of aufs module will be larger a little, but the time\-performance
 
 .SS Mount option
 .
-As a first step, I'd recommend you to try `dirperm1' and `udba=none.'
+As a first step, I'd recommend you to try `dirperm1', `udba=none' and
+`nodirren.'
 The former prohibits aufs to dig down the lower branches in checking the
 directory permission bits, and the latter makes aufs not to watch the
 external modification, eg. by\-passing aufs (users' direct branch access).
@@ -536,10 +558,63 @@ this case, the size of XINO and XIB will grow only, not truncated. In
 other word, it is a time\-vs\-space issue.
 
 For the third and last step, try `noplink' and `noxino.'
-With these options, aufs behaves unreliably a little, which means lose
+With these options, aufs behaves un\-POSIX\-ly a little, which means lose
 the features maintaining the hard\-link (pseudo\-link) and the inode
 numbers. Some behaviours may surprise users, but many internal process
 will be skipped and the result performance will be better.
+
+For your convenience, mount.aufs(8) provides `\*[DROPLVL]=N'
+mount option. `N' means the level (see above) and you can specify either 1, 2
+or 3 (and their negative values, will be described soon). It is not a real mount option,
+which means it is not interpreted
+by kernel\-space. When this option is given, mount.aufs(8)
+translates it into several other (real) mount options, and passes them to
+kernel\-space as if they were originally specified. Currently there are 3 levels.
+.RS
+.nr step 1 1
+.IP \n[step] 4
+\*[DROPLVL1]
+.IP \n+[step]
+\*[DROPLVL2]
+.IP \n+[step]
+\*[DROPLVL3]
+.RE
+For example, when you give `\*[DROPLVL]=3', mount.aufs(8) converts
+it to `\*[DROPLVL1],\*[DROPLVL2],\*[DROPLVL3]'.
+
+For your more convenience, mount.aufs(8) provides the negative values
+for each level. Note that there is no level 0, and no difference between
+2 and \-2.
+The options in `\*[DROPLVL2]' are already implemented, but their design is not fixed
+(cf. External Inode Number Bitmap, Translation Table and Generation
+Table). And the current default value is `\*[DROPLVL2]', so technically
+speaking `\*[DROPLVL2]' is less important.
+.RS
+.nr step 1 1
+.IP \-\n[step] 4
+\*[DROPLVL1R]
+.IP \-\n+[step]
+\*[DROPLVL2R]
+.IP \-\n+[step]
+\*[DROPLVL3R]
+.RE
+The purpose of the negative values are to revert the effect of the
+positive values (counter\-level). Note the XINO path in
+`\-3'. In order to revert `noxino' in `\*[DROPLVL]=3', you
+need to specify the actual XINO path, but it is totally depending upon
+your environment, and mount.aufs(8) doesn't know about it and does nothing but
+provides the default path. So generally it will be necessary to append
+`xino=<your XINO path>' to `\*[DROPLVL]=\-3'.
+
+Reverting `noatime' to `relatime' is rather tricky. It is due to the
+behaviours of mount(8) and mount(2). You need to run
+`remount,strictatime' before `remount,\*[DROPLVL]=\-1'.
+
+Also note that the order of the mount options. For example, if you want to drop some
+features but keep UDBA level as default, then you can specify
+`\*[DROPLVL]=1,udba=reval'. If you write the reverse order as
+`udba=reval,\*[DROPLVL]=1', then `udba=none' in `\*[DROPLVL]=1' takes
+its effect and the udba level specified before \*[DROPLVL] will lose.
 
 .\" ----------------------------------------------------------------------
 .SH Git work\-tree and aufs
@@ -1660,7 +1735,7 @@ This is the default policy.
 .B create=tdmfs:low[:second]
 Select the highest writable branch regardless the existence of the
 parent dir. If the free space of this branch is less than `low' bytes,
-then the next hightest writable branch will be selected.
+then the next highest writable branch will be selected.
 If the free space of all writable branches are less than `low' bytes,
 then create=mfs policy is applied.
 For the duration (`second') parameter, see create=mfs[:second] below.
@@ -2059,7 +2134,7 @@ If your xino file is on a hard drive, you also need to specify
 directory.
 
 To rename(2) directory may return EXDEV even if both of src and tgt
-are on the same aufs. When the rename\-src dir exists on multiple
+are on the same aufs, when `dirren' is not specified. When the rename\-src dir exists on multiple
 branches and the lower dir has child/children, aufs has to copyup all his
 children. It can be recursive copyup. Current aufs does not support
 such huge copyup operation at one time in kernel space, instead
@@ -2123,6 +2198,20 @@ pseudo\-links and the remained aufs\-temp files. If they are found, the
 utility reports you and asks whether to delete or not.
 It is recommended to execute /sbin/auchk for every writable branch
 filesystem before mounting aufs if the system experienced crash.
+
+In linux\-v4.5, copy_file_range(2) is introduced and aufs supports it.
+The systemcall supports only when the given two files exist on the same
+filesystem. In aufs world, two files must exist on the same physical
+filesystem, not on the logical aufs. The case of two files existing on
+the logically same aufs but physically different file system is not
+supported.
+For example, fileA and fileB are given, and fileA exists on the lower
+readonly branch in aufs, and fileB exists on the upper writable branch.
+When these two branches exist on the same filesystem, then aufs
+copy_file_range(2) should work. Otherwise it will return an error.
+In other words, aufs copy_file_range(2) doesn't incur the internal
+copyup since such behaviour doesn't fit the original purpose of
+copy_file_range(2).
 
 
 .\" ----------------------------------------------------------------------
@@ -2331,7 +2420,7 @@ an error when you try using FOO.
 .\" activities.
 
 .SH COPYRIGHT
-Copyright \(co 2005\-2016 Junjiro R. Okajima
+Copyright \(co 2005\-2017 Junjiro R. Okajima
 
 .SH AUTHOR
 Junjiro R. Okajima

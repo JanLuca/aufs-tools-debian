@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2016 Junjiro R. Okajima
+ * Copyright (C) 2005-2017 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,14 +33,23 @@ static inline char *au_decode_mntpnt(char *src, char *dst, int len)
 char *au_decode_mntpnt(char *src, char *dst, int len);
 #endif
 
-#define AuRelease	"20161219"
+#define AuRelease	"20170918"
 #ifdef AUFHSM
 #define AuFhsmStr " with FHSM"
 #else
 #define AuFhsmStr ""
 #endif
-#define AuVersionGitBranch "aufs4.1"
+#define AuVersionGitBranch "aufs4.9"
 #define AuVersion "aufs-util for " AuVersionGitBranch AuFhsmStr " " AuRelease
+
+#define DROPLVL		"droplvl"
+#define DROPLVL1	"noatime,dirperm1,udba=none,nodirren"
+#define DROPLVL1R	"relatime,nodirperm1,udba=reval"
+#define DROPLVL2	"notrunc_xino,notrunc_xib"
+/* #define DROPLVL2R	"trunc_xino,trunc_xib" */
+#define DROPLVL2R	DROPLVL2
+#define DROPLVL3	"noplink,noxino"
+#define DROPLVL3R	"plink,xino=" AUFS_XINO_DEFPATH
 
 /*
  * error_at_line() is decleared with (__printf__, 5, 6) attribute,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2016 Junjiro R. Okajima
+ * Copyright (C) 2009-2017 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@
 #include "libau.h"
 
 static long (*real_pathconf)(const char *path, int name);
-LibAuDlFunc(pathconf)
+LibAuDlFunc(pathconf);
 static long (*real_fpathconf)(int fd, int name);
-LibAuDlFunc(fpathconf)
+LibAuDlFunc(fpathconf);
 
 static long do_fpathconf(int fd, int name)
 {

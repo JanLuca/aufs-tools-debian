@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2016 Junjiro R. Okajima
+ * Copyright (C) 2009-2017 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -457,6 +457,8 @@ int closedir(DIR *dir)
 		fd = dirfd(dir);
 		if (fd < 0)
 			goto out;
+		errno = 0;
+
 		err = fstatfs(fd, &stfs);
 		if (err)
 			goto out;
