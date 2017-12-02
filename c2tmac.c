@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <linux/aufs_type.h>
+#include "au_util.h"
 #include "libau.h"
 
 int
@@ -45,6 +46,14 @@ main(int argc, char *argv[])
 	pint(AUFS_RDHASH_DEF);
 	pint(AUFS_RDCACHE_DEF);
 	pint(AUFS_RDCACHE_MAX);
+
+	pstr(DROPLVL);
+	pstr(DROPLVL1);
+	pstr(DROPLVL1R);
+	pstr(DROPLVL2);
+	pstr(DROPLVL2R);
+	pstr(DROPLVL3);
+	pstr(DROPLVL3R);
 
 	pstr(LibAuEnv);
 	return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2016 Junjiro R. Okajima
+ * Copyright (C) 2005-2017 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,13 +37,43 @@
 #include <linux/aufs_type.h>
 #include "au_util.h"
 
-enum { Remount, Bind, Fake, Update, Verbose, AuFlush, LastOpt };
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+#endif
+
+#define DROPLVL_STR(lvl)		   \
+	{				   \
+		.set = DROPLVL ## lvl,	   \
+		.clr = DROPLVL ## lvl ## R \
+	}
+
+static struct {
+	int	val;
+	char	*arg;
+
+	struct {
+		char *set, *clr;
+	} str[3];
+} droplvl = {
+	/* .val	= DROPLVL_INVALID, */
+	.str = {
+		DROPLVL_STR(1),
+		DROPLVL_STR(2),
+		DROPLVL_STR(3)
+	}
+};
+
+#define DROPLVL_INVALID		ARRAY_SIZE(droplvl.str)
+
+enum { Remount, Bind, Drop, Fake, Update, Verbose, AuFlush, LastOpt };
 static void test_opts(char opts[], unsigned char flags[])
 {
 	int c;
-	char *p, *o, *val, *pat[] = {
+	long l;
+	char *p, *last, *o, *val, *pat[] = {
 		[Remount]	= "remount",
 		[Bind]		= "bind",
+		[Drop]		= DROPLVL,
 		NULL
 	};
 
@@ -51,8 +81,11 @@ static void test_opts(char opts[], unsigned char flags[])
 	if (!o)
 		AuFin("stdup");
 
+	droplvl.arg = NULL;
+	droplvl.val = DROPLVL_INVALID;
 	p = o;
 	while (*p) {
+		last = opts + (p - o);
 		c = getsubopt(&p, pat, &val);
 		switch (c) {
 		case Remount:
@@ -60,6 +93,19 @@ static void test_opts(char opts[], unsigned char flags[])
 			break;
 		case Bind:
 			flags[Bind] = 1;
+			break;
+		case Drop:
+			flags[Drop] = 1;
+			droplvl.arg = last;
+			errno = 0;
+			l = strtol(val, NULL, 0);;
+			if (errno
+			    || !l
+			    || DROPLVL_INVALID < abs(l)) {
+				errno = EINVAL;
+				AuFin("invalid value %ld, %s", l, droplvl.arg);
+			}
+			droplvl.val = l;
 			break;
 		}
 	}
@@ -111,6 +157,56 @@ static int test_flush(char opts[])
 	return err;
 }
 
+static int drop_level(int argc, char **argv, int idx)
+{
+	int i, lvl, neg;
+	size_t l, t;
+	char *src, *o, *p, *str;
+
+	src = argv[idx];
+	l = strlen(src) + 1;
+	if (droplvl.arg < src || src + l < droplvl.arg) {
+		errno = EINVAL;
+		AuFin("internal error, src %p, l %zu, droplvl %p",
+		      src, l, droplvl.arg);
+	}
+	l -= sizeof(DROPLVL) - 1 + 2;	/* "=N" */
+
+	o = malloc(l);
+	t = droplvl.arg - src;
+	memcpy(o, src, t);
+	p = o + t;
+	*p = '\0';
+
+	lvl = abs(droplvl.val);
+	neg = 0;
+	if (droplvl.val < 0)
+		neg = 1;
+	for (i = 0; i < lvl; i++) {
+		str = droplvl.str[i].set;
+		if (neg)
+			str = droplvl.str[i].clr;
+
+		/* with comma or terminating NULL */
+		l += strlen(str) + 1;
+		p = realloc(o, l);
+		if (!p)
+			AuFin("realloc");
+		o = p;
+		strcat(o, str);
+		if (i + 1 < lvl)
+			strcat(o, ",");
+	}
+
+	p = strchr(droplvl.arg, ',');
+	if (p)
+		strcat(o, p);
+	Dpri("o %s\n", o);
+
+	argv[idx] = o;
+	return 0;
+}
+
 static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 		     unsigned char flags[])
 {
@@ -157,13 +253,15 @@ static void do_mount(char *dev, char *mntpnt, int argc, char *argv[],
 
 int main(int argc, char *argv[])
 {
-	int err, c, status, fd;
+	int err, c, status, fd, opts_idx;
 	pid_t pid;
 	unsigned char flags[LastOpt];
 	struct mntent ent;
 	char *dev, *mntpnt, *opts, *cwd;
 	DIR *cur;
 
+	for (c = 0; c < argc; c++)
+		Dpri("%s\n", argv[c]);
 	if (argc < 3) {
 		puts(AuVersion);
 		errno = EINVAL;
@@ -173,6 +271,7 @@ int main(int argc, char *argv[])
 	memset(flags, 0, sizeof(flags));
 	flags[Update] = 1;
 	opts = NULL;
+	opts_idx = -1;
 
 	/* mount(8) always passes the arguments in this order */
 	dev = argv[1];
@@ -191,6 +290,7 @@ int main(int argc, char *argv[])
 		case 'o':
 			if (!opts) {
 				opts = optarg;
+				opts_idx = optind + 1;
 				break;
 			}
 			/*FALLTHROUGH*/
@@ -238,6 +338,9 @@ int main(int argc, char *argv[])
 				AuFin(NULL);
 		}
 	}
+
+	if (flags[Drop])
+		err = drop_level(argc, argv, opts_idx);
 
 	pid = fork();
 	if (!pid) {

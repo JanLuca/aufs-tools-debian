@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Junjiro R. Okajima
+ * Copyright (C) 2011-2017 Junjiro R. Okajima
  *
  * This program, aufs is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 {
 	int err;
 	regex_t preg;
-	const char *pat = "^4\\.[1-9][0-9]?"; /* aufs4.1 and later */
+	const char *pat = "^4\\.(9|[1-9][0-9])"; /* aufs4.9 and later */
 
 	err = regcomp(&preg, pat, REG_EXTENDED | REG_NOSUB);
 	assert(!err); /* internal error */
