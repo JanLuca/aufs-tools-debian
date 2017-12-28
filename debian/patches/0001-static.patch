@@ -3,7 +3,7 @@ Description: Don't build static linked binaries.
 
 --- a/Makefile
 +++ b/Makefile
-@@ -76,7 +76,6 @@
+@@ -118,7 +118,6 @@
  ver_test: ver
  	./ver
  

@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Filesystems Group <filesystems-devel@lists.alioth.debian.org>
 Uploaders: Jan Luca Naumann <j.naumann@fu-berlin.de>
 Build-Depends: debhelper (>= 9), linux-libc-dev, aufs-dev
-Standards-Version: 3.9.8
+Standards-Version: 4.1.2
 Homepage: http://aufs.sourceforge.net/
 Vcs-Browser: https://github.com/JanLuca/aufs-tools-debian
 Vcs-Git: https://github.com/JanLuca/aufs-tools-debian.git

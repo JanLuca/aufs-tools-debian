@@ -5,7 +5,7 @@ Description:
 
 --- a/aufs.in.5
 +++ b/aufs.in.5
-@@ -2121,7 +2121,7 @@
+@@ -2222,7 +2222,7 @@
  installed)
  
  .nf
@@ -14,7 +14,7 @@ Description:
  none on /u type aufs (rw,xino=/day0/.aufs.xino,br:/day0=rw:/base=ro)
  # mount -v -o remount,\\
  	prepend:/day1,\\
-@@ -2133,7 +2133,7 @@
+@@ -2234,7 +2234,7 @@
  .fi
  
  .nf
